@@ -55,7 +55,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             sprint_repo
         )
         
-        return {"standup": standup_svc, "risk": risk_svc, "report": report_svc, "sprint": sprint_svc, "excel": excel_svc}, session
+        return {"standup": standup_svc, "risk": risk_svc, "report": report_svc, "sprint": sprint_svc, "excel": excel_svc, "member": member_repo}, session
 
     @app.command("/scrum")
     async def handle_scrum_command(ack, body, client):
@@ -86,9 +86,12 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             responses = await svcs["standup"].get_today_responses(
                 default_team_id, default_channel_id
             )
+            members = await svcs["member"].get_by_team(default_team_id)
+            member_map = {m.id: m.slack_user_id for m in members}
+            
             blockers = [r for r in responses if r.blockers and r.blockers.strip()]
             if blockers:
-                lines = [f"• {r.blockers}" for r in blockers]
+                lines = [f"• <@{member_map.get(r.member_id, 'Unknown')}>: {r.blockers}" for r in blockers]
                 text = "🚫 *Bloqueos reportados hoy:*\n" + "\n".join(lines)
             else:
                 text = "No hay bloqueos reportados hoy. ✅"
