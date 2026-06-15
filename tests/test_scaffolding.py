@@ -94,6 +94,17 @@ IMPLEMENTED_PY_FILES = {
     "src/infrastructure/slack_client.py": ["class SlackNotifier", "AsyncApp"],
     "src/infrastructure/ai_client.py": ["class AIClient", "ExternalServiceError"],
     "src/infrastructure/scheduler.py": ["class SchedulerService", "AsyncIOScheduler"],
+    "src/application/standup_service.py": ["class StandupService", "StandupAlreadyRespondedError"],
+    "src/application/github_service.py": ["class GitHubService", "sync_pull_requests"],
+    "src/application/risk_service.py": ["class RiskService", "detect_risks"],
+    "src/application/report_service.py": ["class ReportService", "generate_daily_summary"],
+    "src/application/sprint_service.py": ["class SprintService", "SprintNotActiveError"],
+    "src/application/notification_service.py": ["class NotificationService", "send_standup_reminder"],
+    "src/application/excel_sync_service.py": ["class ExcelSyncService", "create_template"],
+    "src/application/ai_service.py": ["class AIService", "summarize_standup"],
+    "tests/unit/test_standup_service.py": ["StandupService", "StandupAlreadyRespondedError"],
+    "tests/unit/test_github_service.py": ["GitHubService", "FakeGitHubClient"],
+    "tests/unit/test_risk_service.py": ["RiskService", "RiskType"],
 }
 
 EXPECTED_CONFIG_FILES = [

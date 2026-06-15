@@ -273,7 +273,7 @@
 - **Dependencias:** `1.2`, `1.3`, `2.4.2`, `2.4.3`
 - **Descripción:** Crear sesión del día, registrar respuestas, missing members, cerrar sesión.
 - **Criterio de aceptación:** Doble submit lanza `StandupAlreadyRespondedError`. get_missing_members retorna faltantes.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.2 — `GitHubService` (`src/application/github_service.py`)
 - **ID:** `3.2`
@@ -282,7 +282,7 @@
 - **Dependencias:** `2.4.4`, `2.5.1`
 - **Descripción:** Sync de PRs abiertos, consulta y detección de PRs stale.
 - **Criterio de aceptación:** Sync persiste sin duplicar. get_stale_prs filtra correcto.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.3 — `RiskService` (`src/application/risk_service.py`)
 - **ID:** `3.3`
@@ -291,7 +291,7 @@
 - **Dependencias:** `1.2`, `2.4.4`, `2.4.6`, `3.1`
 - **Descripción:** Reglas de detección de riesgos automáticos.
 - **Criterio de aceptación:** PRs >24h/48h/72h generan riesgos correctos sin duplicar.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.4 — `ReportService` (`src/application/report_service.py`)
 - **ID:** `3.4`
@@ -300,7 +300,7 @@
 - **Dependencias:** `3.1`, `3.2`, `3.3`
 - **Descripción:** Generar resumen diario Markdown y resumen con IA.
 - **Criterio de aceptación:** Resumen contiene todas las secciones. Maneja datos vacíos.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.5 — `SprintService` (`src/application/sprint_service.py`)
 - **ID:** `3.5`
@@ -309,7 +309,7 @@
 - **Dependencias:** `2.4.5`, `2.4.7`
 - **Descripción:** get_active_sprint, create_sprint, complete_sprint, get_sprint_metrics.
 - **Criterio de aceptación:** Solo un sprint activo por team. complete_sprint cambia status.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.6 — `NotificationService` (`src/application/notification_service.py`)
 - **ID:** `3.6`
@@ -318,7 +318,7 @@
 - **Dependencias:** `2.5.2`
 - **Descripción:** Recordatorio standup, resumen diario, alertas de riesgos y PRs stale.
 - **Criterio de aceptación:** Mensaje Block Kit con botón funcional.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.7 — `ExcelSyncService` (`src/application/excel_sync_service.py`)
 - **ID:** `3.7`
@@ -327,7 +327,7 @@
 - **Dependencias:** `2.4.5`, `2.4.6`, `2.4.7`
 - **Descripción:** Crear template Excel, sync métricas/riesgos, leer/actualizar módulos.
 - **Criterio de aceptación:** `create_template` genera 5 hojas con headers. `sync_metrics` escribe fila nueva.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 3.8 — `AIService` (`src/application/ai_service.py`)
 - **ID:** `3.8`
@@ -336,7 +336,8 @@
 - **Dependencias:** `2.5.3`
 - **Descripción:** Prompts y wrappers para resúmenes de standup y análisis de riesgos.
 - **Criterio de aceptación:** Fallback si la API falla.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Todos los servicios de aplicación validados con tests unitarios.
 
 ---
 
