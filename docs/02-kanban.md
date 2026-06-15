@@ -135,9 +135,10 @@
 - **Prioridad:** P0
 - **Esfuerzo:** S
 - **Dependencias:** `0.3`
-- **Descripción:** Async engine, session factory, `get_session()`, `init_db()`, `Base`.
-- **Criterio de aceptación:** `async for session in get_session()` entrega `AsyncSession` funcional.
-- **Estado:** 🔲
+- **Descripción:** Configurar SQLAlchemy async engine y session factory.
+- **Criterio de aceptación:** `async for session in get_session()` entrega una `AsyncSession` funcional.
+- **Estado:** ✅ Done
+- **Notas:** Engine, async_session_maker, get_session, init_db y close_db implementados. Tests de integración en `tests/integration/test_database.py`.
 
 #### 2.2 — Modelos ORM (`src/infrastructure/orm_models.py`)
 - **ID:** `2.2`

@@ -69,6 +69,23 @@ curl http://localhost:3000/api/health
 
 ---
 
+## Tests
+
+El proyecto usa Python 3.12. Se recomienda ejecutar los tests dentro del contenedor de Docker para garantizar un entorno consistente:
+
+```bash
+# Levantar app + base de datos
+docker compose up -d --build
+
+# Ejecutar toda la suite dentro del contenedor
+docker compose exec app pytest tests/ -q
+
+# Ejecutar tests de Docker build/compose en el host (requiere Docker CLI)
+python -m pytest tests/test_infrastructure.py -q
+```
+
+---
+
 ## Convenciones Rápidas
 
 - **Commits atómicos:** un cambio lógico por commit.
