@@ -73,6 +73,13 @@ EXPECTED_PY_FILES = [
     "tests/integration/test_slack_commands.py",
 ]
 
+# Archivos que ya fueron implementados y no deben tener solo placeholder.
+IMPLEMENTED_PY_FILES = {
+    "src/config.py": ["class Settings", "pydantic_settings"],
+    "src/main.py": ["FastAPI", "include_router"],
+    "src/interfaces/api/routes.py": ["APIRouter", "@router.get"],
+}
+
 EXPECTED_CONFIG_FILES = [
     "docker-compose.yml",
     "Dockerfile",
@@ -103,6 +110,11 @@ def test_python_file_exists_and_has_placeholder(relative_path: str) -> None:
 
     content = path.read_text(encoding="utf-8")
     name = path.stem
+
+    if relative_path in IMPLEMENTED_PY_FILES:
+        for marker in IMPLEMENTED_PY_FILES[relative_path]:
+            assert marker in content, f"Falta marcador '{marker}' en {relative_path}"
+        return
 
     if name == "__init__":
         assert content == "", f"__init__.py debe estar vacío: {relative_path}"

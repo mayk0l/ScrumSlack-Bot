@@ -41,7 +41,8 @@
 - **Dependencias:** `0.1`
 - **Descripción:** Definir dependencias exactas con versiones pinneadas.
 - **Criterio de aceptación:** Archivo lista todos los paquetes del stack.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Validado con Docker build.
 
 #### 0.2.2 — `.env.example`
 - **ID:** `0.2.2`
@@ -50,7 +51,7 @@
 - **Dependencias:** `0.1`
 - **Descripción:** Plantilla de variables de entorno.
 - **Criterio de aceptación:** Incluye app, DB, Slack, GitHub, OpenRouter, standup y Excel.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 0.2.3 — `Dockerfile`
 - **ID:** `0.2.3`
@@ -59,7 +60,8 @@
 - **Dependencias:** `0.1`, `0.2.1`
 - **Descripción:** Imagen Python 3.12 slim con dependencias y entrypoint uvicorn.
 - **Criterio de aceptación:** Build exitoso.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Build validado vía test.
 
 #### 0.2.4 — `docker-compose.yml`
 - **ID:** `0.2.4`
@@ -68,7 +70,8 @@
 - **Dependencias:** `0.1`, `0.2.3`
 - **Descripción:** Servicios `app` y `db` (PostgreSQL 16) con healthcheck.
 - **Criterio de aceptación:** `docker-compose up --build` levanta app + postgres.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Se removió `version: "3.9"` obsoleto. Health check responde en `/api/health`.
 
 #### 0.2.5 — `.gitignore`
 - **ID:** `0.2.5`
@@ -77,7 +80,7 @@
 - **Dependencias:** `0.1`
 - **Descripción:** Ignorar entornos, `.env`, cache, Excel generado.
 - **Criterio de aceptación:** `.env` y `project_tracking.xlsx` no se commitean.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 0.3 — Configuración de la Aplicación (`src/config.py`)
 - **ID:** `0.3`
@@ -86,7 +89,8 @@
 - **Dependencias:** `0.1`, `0.2.2`
 - **Descripción:** Clase `Settings` con `pydantic-settings` leyendo `.env`.
 - **Criterio de aceptación:** `from src.config import settings` funciona y falla si faltan campos obligatorios.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Implementado con pydantic-settings. Validado en contenedor Docker.
 
 ---
 
