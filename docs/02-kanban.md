@@ -447,6 +447,46 @@
 
 ---
 
+### Fase 5 — Integración Valuelist (V)
+
+#### 5.1 — Bloque 1: Conexión y Lectura Base
+- **ID:** `5.1`
+- **Prioridad:** P0
+- **Esfuerzo:** M
+- **Dependencias:** `3.7`
+- **Descripción:** Implementar `ValuelistExcelService` para leer Hojas 1, 3 y 5 de `excel/Bitacora-Rentabilidad-Valuelist.xlsx`. Mapeo de usuarios Slack ↔ Excel. Implementar comandos `/bitacora` y `/mis-tareas`.
+- **Criterio de aceptación:** Tests unitarios pasan. Los comandos leen el archivo y responden en Slack con datos reales.
+- **Estado:** 🔲 Pendiente
+
+#### 5.2 — Bloque 2: Comandos de Escritura Rápida
+- **ID:** `5.2`
+- **Prioridad:** P0
+- **Esfuerzo:** M
+- **Dependencias:** `5.1`
+- **Descripción:** Implementar motor de escritura segura. Comandos `/avance [ID] [%]` y `/evidencia [ID] [URL]`. Actualización de "% logro" y agregación de enlaces en Hoja 5.
+- **Criterio de aceptación:** Las celdas del archivo `.xlsx` se modifican sin romper el formato original. Tests unitarios pasan.
+- **Estado:** 🔲 Pendiente
+
+#### 5.3 — Bloque 3: Interfaz Compleja y Visualización
+- **ID:** `5.3`
+- **Prioridad:** P1
+- **Esfuerzo:** L
+- **Dependencias:** `5.1`
+- **Descripción:** Modal para `/crear-tarea` con Block Kit e inserción de fila en Hoja 3. Comando `/gantt` (mermaid).
+- **Criterio de aceptación:** Modal funcional, fila se inserta al final de la Hoja 3 con columnas correctas. Gantt se visualiza.
+- **Estado:** 🔲 Pendiente
+
+#### 5.4 — Bloque 4: Cierre, Contexto IA y Distribución
+- **ID:** `5.4`
+- **Prioridad:** P1
+- **Esfuerzo:** S
+- **Dependencias:** `5.1`, `3.8`
+- **Descripción:** Inyectar datos de Hoja 1 en `AIService`. Comando `/descargar-excel`.
+- **Criterio de aceptación:** Reporte diario considera OG y Hitos actuales. Slack permite descargar el archivo físico.
+- **Estado:** 🔲 Pendiente
+
+---
+
 ## 🚧 In Progress
 
 _Espacio reservado para mover tareas activas desde Backlog._
