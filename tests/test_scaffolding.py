@@ -78,6 +78,7 @@ IMPLEMENTED_PY_FILES = {
     "src/config.py": ["class Settings", "pydantic_settings"],
     "src/main.py": ["FastAPI", "include_router"],
     "src/interfaces/api/routes.py": ["APIRouter", "@router.get"],
+    "src/domain/models.py": ["@dataclass", "UUID", "uuid4"],
 }
 
 EXPECTED_CONFIG_FILES = [

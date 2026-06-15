@@ -103,7 +103,8 @@
 - **Dependencias:** `0.3`
 - **Descripción:** Entidades y enums con dataclasses/Pydantic, IDs UUID v4 por defecto.
 - **Criterio de aceptación:** Se pueden importar e instanciar sin errores. Sin imports de frameworks.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** 9 entidades + 5 enums implementados con dataclasses. Tests en `tests/unit/test_models.py`.
 
 #### 1.2 — Excepciones de Dominio (`src/domain/exceptions.py`)
 - **ID:** `1.2`
