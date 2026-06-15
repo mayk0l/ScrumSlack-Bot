@@ -463,22 +463,37 @@ _Espacio reservado para tareas que no pueden avanzar hasta recibir input externo
 
 _Espacio reservado para tareas validadas según su criterio de aceptación._
 
+### Fase A — Corrección de Bugs y Estabilización (MVP Funcional)
+- **ID:** `A.1-A.8`
+- **Descripción:** Corrección de inyección de dependencias en `routes.py` y `modals.py`. Implementación de `session_maker` para manejar ciclos de vida asíncronos en Slack Bolt. Reparación de Foreign Key violations inyectando un equipo por defecto. Implementación de Socket Mode.
+- **Estado:** ✅ Done
+
+### Fase B — Testing
+- **ID:** `B.1`
+- **Descripción:** Validar que los tests unitarios pasen en el entorno corregido.
+- **Estado:** ✅ Done (204 passed)
+
+### Fase C — Documentación Técnica
+- **ID:** `C.1-C.2`
+- **Descripción:** Redactar `docs/04-decisiones-de-arquitectura.md` y `docs/05-changelog.md`.
+- **Estado:** ✅ Done
+
 ---
 
 ## 🎯 Checklist Final de Validación
 
-- [ ] `docker-compose up` levanta app + DB sin errores.
-- [ ] `alembic upgrade head` crea todas las tablas.
-- [ ] `/scrum` en Slack abre modal y guarda respuesta.
-- [ ] `/riesgos` muestra PRs sin review.
-- [ ] `/bloqueos` muestra bloqueos del standup del día.
-- [ ] Recordatorio se envía a las 9:00 AM.
-- [ ] Resumen diario se genera a las 17:00.
-- [ ] PRs se sincronizan desde GitHub periódicamente.
-- [ ] Riesgos se detectan automáticamente.
-- [ ] Excel se crea con template y se actualiza con métricas.
-- [ ] Tests unitarios pasan.
-- [ ] Health check responde en `/api/health`.
+- [x] `docker-compose up` levanta app + DB sin errores.
+- [x] `alembic upgrade head` crea todas las tablas.
+- [x] `/scrum` en Slack abre modal y guarda respuesta.
+- [x] `/riesgos` muestra PRs sin review.
+- [x] `/bloqueos` muestra bloqueos del standup del día.
+- [x] Recordatorio se envía a las 9:00 AM.
+- [x] Resumen diario se genera a las 17:00.
+- [x] PRs se sincronizan desde GitHub periódicamente.
+- [x] Riesgos se detectan automáticamente.
+- [x] Excel se crea con template y se actualiza con métricas.
+- [x] Tests unitarios pasan.
+- [x] Health check responde en `/api/health`.
 
 ---
 

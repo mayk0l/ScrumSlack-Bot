@@ -67,8 +67,10 @@ Más detalles en [`docs/00-especificacion-completa.md`](docs/00-especificacion-c
 git clone <repo-url>
 cd ScrumSlack-Bot
 cp .env.example .env
-# Editar .env con tus credenciales
 ```
+
+Edita el `.env` con tus credenciales. 
+**Importante:** Para desarrollo local sin exponer un endpoint HTTP, rellena `SLACK_APP_TOKEN` con un token `xapp-...` de tu app en Slack y asegúrate de activar el **Socket Mode**. El bot lo detectará y se conectará automáticamente.
 
 ### 2. Levantar la aplicación
 
