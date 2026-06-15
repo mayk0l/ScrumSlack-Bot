@@ -75,3 +75,49 @@ class ValuelistExcelService:
                 return {"og": "", "oe": []}
 
         return await asyncio.to_thread(_read)
+
+    async def update_task_progress(self, task_id: str, progress: float) -> bool:
+        """Actualiza el porcentaje de logro de una tarea en la Hoja 3."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                ws = wb["Planificación"]
+                
+                for row in ws.iter_rows(min_row=2):
+                    cell_id = row[0]
+                    if cell_id.value and str(cell_id.value) == task_id:
+                        row[6].value = progress
+                        wb.save(self._excel_path)
+                        return True
+                return False
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)
+
+    async def add_evidence(self, task_id: str, url: str) -> bool:
+        """Añade un enlace de evidencia a la Hoja 5."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                
+                # Primero buscar la descripción en Planificación
+                ws_plan = wb["Planificación"]
+                desc = ""
+                for row in ws_plan.iter_rows(min_row=2):
+                    cell_id = row[0]
+                    if cell_id.value and str(cell_id.value) == task_id:
+                        desc = str(row[1].value) if row[1].value else ""
+                        break
+                        
+                if not desc:
+                    return False
+                    
+                ws_evi = wb["Evidencia"]
+                ws_evi.append([task_id, desc, url])
+                wb.save(self._excel_path)
+                return True
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)

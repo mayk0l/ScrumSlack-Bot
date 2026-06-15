@@ -208,3 +208,49 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             text = "⚠️ No se pudo leer la Bitácora o está vacía."
             
         await say(text)
+
+    @app.command("/avance")
+    async def handle_avance_command(ack, body, say):
+        await ack()
+        text = body.get("text", "").strip()
+        parts = text.split(" ")
+        
+        if len(parts) < 2:
+            await say("⚠️ Uso incorrecto. Ejemplo: `/avance A2.1 100`")
+            return
+            
+        task_id = parts[0]
+        try:
+            progress = float(parts[1]) / 100.0 if float(parts[1]) > 1 else float(parts[1])
+        except ValueError:
+            await say("⚠️ El porcentaje debe ser un número (Ej: 100 o 1.0)")
+            return
+            
+        svcs, session = await _get_services()
+        success = await svcs["valuelist"].update_task_progress(task_id, progress)
+        
+        if success:
+            await say(f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, no olvides usar `/evidencia {task_id} [URL]`")
+        else:
+            await say(f"❌ No se encontró la tarea *{task_id}* en la Planificación.")
+
+    @app.command("/evidencia")
+    async def handle_evidencia_command(ack, body, say):
+        await ack()
+        text = body.get("text", "").strip()
+        parts = text.split(" ", 1)
+        
+        if len(parts) < 2:
+            await say("⚠️ Uso incorrecto. Ejemplo: `/evidencia A2.1 https://github.com/pull/123`")
+            return
+            
+        task_id = parts[0]
+        url = parts[1]
+        
+        svcs, session = await _get_services()
+        success = await svcs["valuelist"].add_evidence(task_id, url)
+        
+        if success:
+            await say(f"🔗 Evidencia guardada para *{task_id}* en la Hoja 5.")
+        else:
+            await say(f"❌ No se encontró la tarea *{task_id}* para adjuntar la evidencia.")

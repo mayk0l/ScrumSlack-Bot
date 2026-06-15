@@ -60,3 +60,47 @@ async def test_get_bitacora_summary(mock_load_workbook, service):
     assert len(summary["oe"]) == 1
     assert summary["oe"][0]["id"] == "OE1"
     assert summary["oe"][0]["desc"] == "Cosa 1"
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_update_task_progress(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    # Mock data for Planificación
+    # Actividad, Descripción, Responsable, Comienzo, Fin, % esp, % logro
+    mock_row = [MagicMock(value="A2.1"), MagicMock(value="Test"), MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock(value=0)]
+    mock_ws.iter_rows.return_value = [mock_row]
+    
+    found = await service.update_task_progress("A2.1", 1.0)
+    
+    assert found is True
+    assert mock_row[6].value == 1.0
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_add_evidence(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws_plan = MagicMock()
+    mock_ws_evi = MagicMock()
+    
+    def getitem_side_effect(sheet_name):
+        if sheet_name == "Planificación": return mock_ws_plan
+        if sheet_name == "Evidencia": return mock_ws_evi
+        return MagicMock()
+    
+    mock_wb.__getitem__.side_effect = getitem_side_effect
+    
+    # Mock row in Planificación to find the description
+    mock_row = [MagicMock(value="A2.1"), MagicMock(value="Test Description")]
+    mock_ws_plan.iter_rows.return_value = [mock_row]
+    
+    success = await service.add_evidence("A2.1", "http://github.com/test")
+    
+    assert success is True
+    mock_ws_evi.append.assert_called_once_with(["A2.1", "Test Description", "http://github.com/test"])
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
