@@ -167,7 +167,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** Implementar get_by_id, save, get_all.
 - **Criterio de aceptación:** Tests unitarios pasan.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.2 — Repositorio `MemberRepositoryImpl` (`src/infrastructure/repositories/member_repo.py`)
 - **ID:** `2.4.2`
@@ -176,7 +176,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** Implementar get_by_id, get_by_slack_user_id, get_by_team, save.
 - **Criterio de aceptación:** Tests unitarios pasan.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.3 — Repositorios Standup (`src/infrastructure/repositories/standup_repo.py`)
 - **ID:** `2.4.3`
@@ -185,7 +185,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** `StandupSessionRepositoryImpl` + `StandupResponseRepositoryImpl`.
 - **Criterio de aceptación:** get_today_session, get_by_member_and_session funcionan correctamente.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.4 — Repositorio `PullRequestRepositoryImpl` (`src/infrastructure/repositories/pr_repo.py`)
 - **ID:** `2.4.4`
@@ -194,7 +194,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** save, upsert con `on_conflict_do_update`, get_open_by_team, get_stale_prs.
 - **Criterio de aceptación:** Upsert no duplica. get_stale_prs filtra por horas sin reviewers.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.5 — Repositorio `SprintRepositoryImpl` (`src/infrastructure/repositories/sprint_repo.py`)
 - **ID:** `2.4.5`
@@ -203,7 +203,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** get_active, save, update_status.
 - **Criterio de aceptación:** get_active retorna sprint con status `active`.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.6 — Repositorio `RiskRepositoryImpl` (`src/infrastructure/repositories/risk_repo.py`)
 - **ID:** `2.4.6`
@@ -212,7 +212,7 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** save, get_active_by_team, resolve.
 - **Criterio de aceptación:** get_active_by_team filtra `resolved == False`.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.4.7 — Repositorio `MetricRepositoryImpl` (`src/infrastructure/repositories/metric_repo.py`)
 - **ID:** `2.4.7`
@@ -221,7 +221,8 @@
 - **Dependencias:** `1.3`, `2.2`
 - **Descripción:** save, get_by_sprint, get_latest.
 - **Criterio de aceptación:** get_latest retorna el snapshot más reciente.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Todos los repositorios del bloque 2.4 validados con tests de integración en `tests/integration/test_db_repos.py`.
 
 #### 2.5.1 — GitHub Client (`src/infrastructure/github_client.py`)
 - **ID:** `2.5.1`
