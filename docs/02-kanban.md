@@ -157,7 +157,8 @@
 - **Dependencias:** `2.2`
 - **Descripción:** `alembic.ini` + `migrations/env.py` con soporte async y URL desde settings.
 - **Criterio de aceptación:** `alembic revision --autogenerate -m "initial_schema"` y `alembic upgrade head` funcionan.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Configuración async implementada. Migración inicial generada y aplicada. Tests en `tests/integration/test_alembic.py` validan tablas creadas e idempotencia de upgrade head.
 
 #### 2.4.1 — Repositorio `TeamRepositoryImpl` (`src/infrastructure/repositories/team_repo.py`)
 - **ID:** `2.4.1`
