@@ -105,6 +105,14 @@ IMPLEMENTED_PY_FILES = {
     "tests/unit/test_standup_service.py": ["StandupService", "StandupAlreadyRespondedError"],
     "tests/unit/test_github_service.py": ["GitHubService", "FakeGitHubClient"],
     "tests/unit/test_risk_service.py": ["RiskService", "RiskType"],
+    "src/interfaces/slack/bolt_app.py": ["register_handlers", "AsyncApp"],
+    "src/interfaces/slack/commands.py": ["register_commands", "/scrum"],
+    "src/interfaces/slack/modals.py": ["build_standup_modal", "standup_submission"],
+    "src/interfaces/slack/events.py": ["register_events", "app_mention"],
+    "src/interfaces/api/routes.py": ["APIRouter", "health"],
+    "src/interfaces/api/dependencies.py": ["get_db_session", "get_session"],
+    "tests/integration/test_api_routes.py": ["TestClient", "/api/health"],
+    "tests/unit/test_slack_interfaces.py": ["build_standup_modal", "register_handlers"],
 }
 
 EXPECTED_CONFIG_FILES = [

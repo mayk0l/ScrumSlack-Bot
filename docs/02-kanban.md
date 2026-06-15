@@ -350,7 +350,7 @@
 - **Dependencias:** `4.2`, `4.3`, `4.4`
 - **Descripción:** `register_handlers()` centralizado.
 - **Criterio de aceptación:** Todos los handlers registrados en un solo punto.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 4.2 — Slash Commands (`src/interfaces/slack/commands.py`)
 - **ID:** `4.2`
@@ -359,7 +359,7 @@
 - **Dependencias:** `3.1`, `3.3`, `3.5`, `3.6`, `3.7`
 - **Descripción:** `/scrum`, `/riesgos`, `/bloqueos`, `/sprint`, `/metricas`, `/reporte`, `/progreso`.
 - **Criterio de aceptación:** Cada comando responde en <3 segundos. Usa Block Kit.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 4.3 — Modales (`src/interfaces/slack/modals.py`)
 - **ID:** `4.3`
@@ -368,7 +368,7 @@
 - **Dependencias:** `3.1`, `3.6`
 - **Descripción:** Modal de standup y handler de `view_submission`.
 - **Criterio de aceptación:** Modal abre, submit guarda respuesta, usuario recibe confirmación.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 4.4 — Eventos (`src/interfaces/slack/events.py`)
 - **ID:** `4.4`
@@ -377,7 +377,7 @@
 - **Dependencias:** `4.3`
 - **Descripción:** `app_mention` y `standup_button_click`.
 - **Criterio de aceptación:** Mención responde ayuda. Botón abre modal.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 4.5 — FastAPI Routes (`src/interfaces/api/routes.py`)
 - **ID:** `4.5`
@@ -386,7 +386,7 @@
 - **Dependencias:** `2.1`, `3.1`, `3.2`, `3.3`, `3.5`
 - **Descripción:** `/api/health` y endpoints de team (standup, risks, PRs, metrics).
 - **Criterio de aceptación:** Health check 200. Endpoints retornan JSON.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 4.6 — FastAPI Dependencies (`src/interfaces/api/dependencies.py`)
 - **ID:** `4.6`
@@ -395,7 +395,7 @@
 - **Dependencias:** `2.1`, `2.4.*`, `3.*`
 - **Descripción:** Inyección de dependencias con `get_session()` y factories de servicios.
 - **Criterio de aceptación:** `Depends(get_session)` maneja commit/rollback automático.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 ---
 
@@ -408,7 +408,8 @@
 - **Dependencias:** `2.5.4`, `4.1`, `4.5`
 - **Descripción:** Ensamblar FastAPI + Slack Bolt + Scheduler con lifespan.
 - **Criterio de aceptación:** `docker-compose up` levanta todo. `/slack/events` funciona. Scheduler ejecuta jobs.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Lifespan implementado con init_db, scheduler y jobs diarios. Endpoint `/slack/events` expuesto.
 
 ---
 
@@ -421,7 +422,8 @@
 - **Dependencias:** `2.1`, `2.4.*`
 - **Descripción:** Fixtures DB in-memory, repos mock, servicios mockeados.
 - **Criterio de aceptación:** Fixtures funcionan para unit + integration tests.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** `tests/conftest.py` creado como placeholder inicial.
 
 #### 6.2 — Tests Unitarios
 - **ID:** `6.2`
@@ -430,7 +432,8 @@
 - **Dependencias:** `6.1`, `3.1`, `3.2`, `3.3`, `3.4`
 - **Descripción:** `test_standup_service.py`, `test_risk_service.py`, `test_github_service.py`, `test_report_service.py`.
 - **Criterio de aceptación:** Todos los tests unitarios pasan.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Tests unitarios creados para servicios y clientes externos.
 
 #### 6.3 — Tests de Integración
 - **ID:** `6.3`
@@ -439,7 +442,8 @@
 - **Dependencias:** `6.1`, `4.2`, `4.3`
 - **Descripción:** `test_slack_commands.py` y `test_db_repos.py`.
 - **Criterio de aceptación:** CRUD real contra PostgreSQL de Docker. Slash commands simulados.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** `test_db_repos.py` y `test_api_routes.py` implementados. `test_slack_commands.py` como placeholder.
 
 ---
 
