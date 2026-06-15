@@ -13,6 +13,7 @@ from src.domain.repositories import (
     PullRequestRepository,
     RiskRepository,
     StandupResponseRepository,
+    StandupSessionRepository,
 )
 
 
@@ -24,10 +25,12 @@ class RiskService:
         risk_repo: RiskRepository,
         pr_repo: PullRequestRepository,
         response_repo: StandupResponseRepository,
+        session_repo: StandupSessionRepository,
     ):
         self._risk_repo = risk_repo
         self._pr_repo = pr_repo
         self._response_repo = response_repo
+        self._session_repo = session_repo
 
     async def detect_risks(self, team_id: UUID) -> list[Risk]:
         """Ejecuta todas las reglas de detección y persiste riesgos nuevos."""
@@ -94,10 +97,27 @@ class RiskService:
         return risks
 
     async def _detect_standup_blockers(self, team_id: UUID) -> list[Risk]:
-        """Detecta bloqueos reportados en respuestas de standup recientes."""
+        """Detecta bloqueos reportados en respuestas de standup del día."""
+        from datetime import date as date_type
         risks: list[Risk] = []
-        # Implementación simplificada: iterar por todas las respuestas no es eficiente.
-        # En una versión real se filtraría por sesión del día.
+        today_session = await self._session_repo.get_today_session(team_id, date_type.today())
+        if today_session is None:
+            return risks
+        responses = await self._response_repo.get_by_session(today_session.id)
+        for resp in responses:
+            if resp.blockers and resp.blockers.strip():
+                risks.append(
+                    Risk(
+                        team_id=team_id,
+                        type=RiskType.BLOCKER,
+                        description=f"Blocker reportado por miembro {resp.member_id}: {resp.blockers[:100]}",
+                        severity=Severity.MEDIUM,
+                        source_ref={
+                            "session_id": str(today_session.id),
+                            "member_id": str(resp.member_id),
+                        },
+                    )
+                )
         return risks
 
     async def _risk_already_exists(self, team_id: UUID, risk: Risk) -> bool:

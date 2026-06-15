@@ -51,9 +51,21 @@ def build_standup_modal() -> dict:
     }
 
 
+from src.application.standup_service import StandupService
+from src.infrastructure.repositories.standup_repo import StandupSessionRepositoryImpl, StandupResponseRepositoryImpl
+from src.infrastructure.repositories.member_repo import MemberRepositoryImpl
+
 def register_modals(app: AsyncApp, services: dict) -> None:
     """Registra el handler de envío del modal de standup."""
-    standup_service = services["standup_service"]
+    maker = services["session_maker"]
+
+    async def _get_standup_service():
+        session = maker()
+        return StandupService(
+            session_repo=StandupSessionRepositoryImpl(session),
+            response_repo=StandupResponseRepositoryImpl(session),
+            member_repo=MemberRepositoryImpl(session),
+        ), session
 
     @app.view("standup_submission")
     async def handle_standup_submission(ack, body, view):
@@ -64,16 +76,20 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         blockers = values["blockers_block"]["blockers_input"]["value"] or ""
         user_id = body["user"]["id"]
 
-        # TODO: Resolver team_id desde contexto (cookie/db lookup)
-        from uuid import UUID
-        team_id = UUID(services.get("default_team_id", "00000000-0000-0000-0000-000000000000"))
+        team_id = services.get("default_team_id", "00000000-0000-0000-0000-000000000000")
+        if isinstance(team_id, str):
+            from uuid import UUID
+            team_id = UUID(team_id)
         channel_id = services.get("default_channel_id", "C000")
 
-        await standup_service.submit_response(
-            team_id=team_id,
-            slack_user_id=user_id,
-            yesterday=yesterday,
-            today=today,
-            blockers=blockers,
-            slack_channel_id=channel_id,
-        )
+        svc, session = await _get_standup_service()
+        async with session:
+            await svc.submit_response(
+                team_id=team_id,
+                slack_user_id=user_id,
+                yesterday=yesterday,
+                today=today,
+                blockers=blockers,
+                slack_channel_id=channel_id,
+            )
+            await session.commit()

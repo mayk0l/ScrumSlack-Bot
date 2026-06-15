@@ -125,8 +125,14 @@ class ExcelSyncService:
     async def get_module_progress(self) -> list[dict[str, Any]]:
         """Lee la hoja Módulos y retorna progreso."""
 
-        def _read() -> list[dict[str, Any]]:
-            wb = openpyxl.load_workbook(self._excel_path)
+        def _read() -> list[dict]:
+            import zipfile
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+            except (FileNotFoundError, zipfile.BadZipFile):
+                return []
+            if "Módulos" not in wb.sheetnames:
+                return []
             ws = wb[SHEET_MODULES]
             rows = []
             for row in ws.iter_rows(min_row=2, values_only=True):

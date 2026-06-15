@@ -1,0 +1,27 @@
+# Changelog y Corrección de Bugs
+
+## Correcciones Fase A (Estabilización)
+
+### 1. Error de Dependency Injection en `routes.py`
+**Problema:** Los endpoints intentaban llamar a `.to_domain()` sobre objetos que ya eran instancias del dominio, dado que los repositorios fueron refactorizados previamente para retornar directamente modelos del dominio (Dataclasses) en vez de modelos ORM.
+**Solución:** Se removieron todas las llamadas `.to_domain()` en los endpoints de `routes.py` y se reemplazaron por FastAPI serialization directo o por un helper `_serialize()`.
+
+### 2. Error de Dependency Injection en Slack Handlers (`main.py` / `commands.py`)
+**Problema:** `main.py` instanciaba los servicios de aplicación pasándoles un diccionario con `None` (ej. `services={"standup_service": None}`) lo cual causaba crasheos al recibir comandos o acciones de Slack, porque los métodos intentaban ejecutarse sobre `None`.
+**Solución:** Se implementó una _factory function_ (`session_maker`) dentro del diccionario `services`. Ahora, cada handler (`/riesgos`, `/reporte`, modal submit) invoca a un helper interno `_get_services()` que obtiene una sesión asíncrona nueva, instancia los repositorios concretos inyectando esa sesión, y luego instancia los servicios pasándole los repositorios. Esto garantiza un _scoped lifetime_ por cada request de Slack, que es el patrón ideal para SQLAlchemy `AsyncSession`.
+
+### 3. Falta del Repositorio de Standup en RiskService
+**Problema:** El `RiskService` no contaba con acceso al repositorio de sesiones de Standup, imposibilitando la detección de bloqueos del día.
+**Solución:** Se añadió `session_repo` a la inicialización de `RiskService` en `main.py`, `commands.py` y las pruebas unitarias, implementando finalmente el método `_detect_standup_blockers` de forma correcta y eficiente.
+
+### 4. Implementación de Slash Commands Faltantes
+**Problema:** Múltiples comandos devolvían "implementación pendiente".
+**Solución:**
+- `/bloqueos`: Implementado para extraer y listar usuarios con bloqueos activos en la sesión de hoy.
+- `/sprint`: Agregado para mostrar detalles, fechas y estado del sprint activo.
+- `/metricas`: Añadido para retornar la lista de métricas (velocity, completion, etc.) del sprint en curso.
+- `/progreso`: Implementado para invocar a `ExcelSyncService` y leer la pestaña "Módulos", mostrando en Slack el avance de cada módulo.
+
+### 5. Generación de la Migración Inicial
+**Problema:** Existía un archivo de migración vacío o inconsistente con los modelos SQLAlchemy definidos en `src/infrastructure/orm_models.py`.
+**Solución:** Se borró la migración residual, se limpió la tabla `alembic_version` del contenedor local de PostgreSQL y se regeneró la migración inicial usando el contenedor de la aplicación.

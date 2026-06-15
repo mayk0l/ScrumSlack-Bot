@@ -28,13 +28,39 @@ from src.infrastructure.slack_client import create_slack_app, create_slack_handl
 from src.interfaces.api.routes import router as api_router
 from src.interfaces.slack.bolt_app import register_handlers
 
+maker = __import__("src.infrastructure.database", fromlist=["get_async_session_maker"]).get_async_session_maker()
+global_github_client = GitHubClient(settings.github_token)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Maneja el ciclo de vida de la aplicación."""
     await init_db()
 
-    github_client = GitHubClient(settings.github_token)
+    from src.infrastructure.database import get_async_session_maker
+    maker = get_async_session_maker()
+    
+    # Crear equipo por defecto para evitar errores de Foreign Key
+    async with maker() as session:
+        from src.infrastructure.orm_models import TeamORM
+        from sqlalchemy import select
+        from uuid import UUID
+        
+        default_team_id = UUID("00000000-0000-0000-0000-000000000000")
+        stmt = select(TeamORM).where(TeamORM.id == default_team_id)
+        result = await session.execute(stmt)
+        if not result.scalars().first():
+            new_team = TeamORM(
+                id=default_team_id,
+                name="Default Team",
+                slack_bot_token=settings.slack_bot_token,
+                github_token=settings.github_token,
+                standup_channel_id=settings.standup_channel_id,
+                standup_schedule_time=settings.standup_time
+            )
+            session.add(new_team)
+            await session.commit()
+
+    github_client = global_github_client
     scheduler = SchedulerService()
 
     # Inyección manual de dependencias para handlers programados.
@@ -43,11 +69,8 @@ async def lifespan(app: FastAPI):
     from src.application.notification_service import NotificationService
     from src.application.risk_service import RiskService
     from src.application.standup_service import StandupService
-    from src.infrastructure.database import get_async_session_maker
     from src.infrastructure.slack_client import SlackNotifier
     from slack_sdk.web.async_client import AsyncWebClient
-
-    maker = get_async_session_maker()
 
     async def send_standup_reminder() -> None:
         async with maker() as session:
@@ -75,7 +98,7 @@ async def lifespan(app: FastAPI):
                 member_repo=member_repo,
             )
             github_service = GitHubService(github_client, pr_repo)
-            risk_service = RiskService(risk_repo, pr_repo, response_repo)
+            risk_service = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
             sprint_service = __import__(
                 "src.application.sprint_service", fromlist=["SprintService"]
             ).SprintService(sprint_repo=SprintRepositoryImpl(session), metric_repo=metric_repo)
@@ -116,7 +139,7 @@ async def lifespan(app: FastAPI):
             pr_repo = PullRequestRepositoryImpl(session)
             risk_repo = RiskRepositoryImpl(session)
             team_repo = TeamRepositoryImpl(session)
-            risk_service = RiskService(risk_repo, pr_repo, response_repo)
+            risk_service = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
             teams = await team_repo.get_all()
             for team in teams:
                 await risk_service.detect_risks(team.id)
@@ -143,8 +166,17 @@ async def lifespan(app: FastAPI):
 
     scheduler.start()
 
+    socket_mode_handler = None
+    if settings.slack_app_token and settings.slack_app_token.startswith("xapp-"):
+        from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
+        socket_mode_handler = AsyncSocketModeHandler(slack_app, settings.slack_app_token)
+        await socket_mode_handler.connect_async()
+
     yield
 
+    if socket_mode_handler:
+        await socket_mode_handler.close_async()
+        
     scheduler.shutdown(wait=False)
     await github_client.close()
     await close_db()
@@ -159,9 +191,8 @@ slack_app = create_slack_app(
 slack_handler = create_slack_handler(slack_app)
 
 services = {
-    "standup_service": None,
-    "report_service": None,
-    "risk_service": None,
+    "session_maker": maker,
+    "github_client": global_github_client,
     "default_team_id": UUID("00000000-0000-0000-0000-000000000000"),
     "default_channel_id": settings.standup_channel_id,
 }

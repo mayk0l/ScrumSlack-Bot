@@ -22,6 +22,28 @@ from src.interfaces.api.dependencies import (
 router = APIRouter(prefix="/api")
 
 
+import dataclasses
+from datetime import date, datetime
+from enum import Enum
+
+def _serialize(obj):
+    """Convierte dataclass de dominio a dict serializable."""
+    if obj is None:
+        return None
+    def _convert(val):
+        if isinstance(val, UUID):
+            return str(val)
+        if isinstance(val, (datetime, date)):
+            return val.isoformat()
+        if isinstance(val, Enum):
+            return val.value
+        if isinstance(val, dict):
+            return {k: _convert(v) for k, v in val.items()}
+        if isinstance(val, list):
+            return [_convert(v) for v in val]
+        return val
+    return _convert(dataclasses.asdict(obj))
+
 @router.get("/health", response_model=dict)
 async def health() -> dict:
     """Health check básico."""
@@ -39,7 +61,7 @@ async def get_today_standup(
     session = await session_repo.get_today_session(team_id, date.today())
     return {
         "team_id": str(team_id),
-        "session": session.to_domain() if session else None,
+        "session": _serialize(session),
     }
 
 
@@ -50,7 +72,7 @@ async def get_risks(
 ):
     """Obtiene los riesgos activos del equipo."""
     risks = await risk_repo.get_active_by_team(team_id)
-    return {"team_id": str(team_id), "risks": [r.to_domain() for r in risks]}
+    return {"team_id": str(team_id), "risks": [_serialize(r) for r in risks]}
 
 
 @router.get("/teams/{team_id}/prs", response_model=dict)
@@ -60,7 +82,7 @@ async def get_pull_requests(
 ):
     """Obtiene los PRs abiertos del equipo."""
     prs = await pr_repo.get_open_by_team(team_id)
-    return {"team_id": str(team_id), "prs": [p.to_domain() for p in prs]}
+    return {"team_id": str(team_id), "prs": [_serialize(p) for p in prs]}
 
 
 @router.get("/teams/{team_id}/members", response_model=dict)
@@ -70,7 +92,7 @@ async def get_members(
 ):
     """Obtiene los miembros del equipo."""
     members = await member_repo.get_by_team(team_id)
-    return {"team_id": str(team_id), "members": [m.to_domain() for m in members]}
+    return {"team_id": str(team_id), "members": [_serialize(m) for m in members]}
 
 
 @router.get("/teams/{team_id}/metrics", response_model=dict)
@@ -84,5 +106,5 @@ async def get_metrics(
     return {
         "team_id": str(team_id),
         "metric_type": metric_type,
-        "latest": latest.to_domain() if latest else None,
+        "latest": _serialize(latest),
     }

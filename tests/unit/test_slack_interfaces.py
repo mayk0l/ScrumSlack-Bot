@@ -17,10 +17,14 @@ def test_build_standup_modal_structure() -> None:
 def test_register_handlers_does_not_raise() -> None:
     """El registro de handlers no lanza excepciones."""
     app = AsyncApp(token="xoxb-test", signing_secret="test")
+    class FakeSession:
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): pass
+        async def commit(self): pass
+
     services = {
-        "standup_service": None,
-        "report_service": None,
-        "risk_service": None,
+        "session_maker": lambda: FakeSession(),
+        "github_client": None,
         "default_team_id": "00000000-0000-0000-0000-000000000000",
         "default_channel_id": "C000",
     }

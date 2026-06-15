@@ -47,6 +47,10 @@ class FakePullRequestRepository:
         ]
 
 
+class FakeSessionRepository:
+    async def get_today_session(self, team_id, date):
+        return None
+
 class FakeResponseRepository:
     async def save(self, response):
         return response
@@ -78,6 +82,7 @@ async def test_detect_risks_creates_pr_no_review():
         risk_repo=risk_repo,
         pr_repo=FakePullRequestRepository([pr]),
         response_repo=FakeResponseRepository(),
+        session_repo=FakeSessionRepository(),
     )
 
     risks = await service.detect_risks(team_id)
@@ -106,6 +111,7 @@ async def test_detect_risks_does_not_duplicate():
         risk_repo=risk_repo,
         pr_repo=FakePullRequestRepository([pr]),
         response_repo=FakeResponseRepository(),
+        session_repo=FakeSessionRepository(),
     )
 
     await service.detect_risks(team_id)
