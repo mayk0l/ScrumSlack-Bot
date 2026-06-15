@@ -122,8 +122,9 @@
 - **Esfuerzo:** M
 - **Dependencias:** `1.1`
 - **Descripción:** Clases abstractas `ABC` con métodos `async` para cada entidad.
-- **Criterio de aceptación:** Ningún import de SQLAlchemy. Todos los métodos son `abstractmethod` y `async`.
-- **Estado:** 🔲
+- **Criterio de aceptación:** Ningún import de SQLAlchemy. Todos los métodos son `abstractmethod` y `async`. Los tipos de retorno usan modelos de dominio.
+- **Estado:** ✅ Done
+- **Notas:** 8 repositorios abstractos implementados. Tipos de retorno con modelos de dominio. Tests en `tests/unit/test_repositories.py`.
 
 ---
 

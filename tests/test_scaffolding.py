@@ -80,6 +80,7 @@ IMPLEMENTED_PY_FILES = {
     "src/interfaces/api/routes.py": ["APIRouter", "@router.get"],
     "src/domain/models.py": ["@dataclass", "UUID", "uuid4"],
     "src/domain/exceptions.py": ["class DomainException", "class EntityNotFoundError"],
+    "src/domain/repositories.py": ["class TeamRepository", "abstractmethod", "async def"],
 }
 
 EXPECTED_CONFIG_FILES = [
