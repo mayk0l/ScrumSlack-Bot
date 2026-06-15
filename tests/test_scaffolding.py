@@ -82,6 +82,7 @@ IMPLEMENTED_PY_FILES = {
     "src/domain/exceptions.py": ["class DomainException", "class EntityNotFoundError"],
     "src/domain/repositories.py": ["class TeamRepository", "abstractmethod", "async def"],
     "src/infrastructure/database.py": ["create_async_engine", "async_sessionmaker", "Base"],
+    "src/infrastructure/orm_models.py": ["class TeamORM", "to_domain", "from_domain"],
 }
 
 EXPECTED_CONFIG_FILES = [

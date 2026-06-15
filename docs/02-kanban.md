@@ -138,7 +138,7 @@
 - **Descripción:** Configurar SQLAlchemy async engine y session factory.
 - **Criterio de aceptación:** `async for session in get_session()` entrega una `AsyncSession` funcional.
 - **Estado:** ✅ Done
-- **Notas:** Engine, async_session_maker, get_session, init_db y close_db implementados. Tests de integración en `tests/integration/test_database.py`.
+- **Notas:** Engine lazy (`get_engine`), async_session_maker lazy (`get_async_session_maker`), `get_session`, `init_db` y `close_db` implementados. Tests de integración en `tests/integration/test_database.py`. El cambio a lazy evita conflictos de event loop en tests async.
 
 #### 2.2 — Modelos ORM (`src/infrastructure/orm_models.py`)
 - **ID:** `2.2`
@@ -147,7 +147,8 @@
 - **Dependencias:** `1.1`, `2.1`
 - **Descripción:** Mapeo de entidades a tablas PostgreSQL con métodos `to_domain()` / `from_domain()`.
 - **Criterio de aceptación:** Alembic genera migración sin errores. Tablas creadas con tipos correctos.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Implementados 8 modelos ORM con relaciones y conversiones. Tests de integración round-trip en `tests/integration/test_orm_models.py` (8 tests). Se usó engine local con `NullPool` por test para evitar problemas de event loop entre pytest-asyncio y asyncpg.
 
 #### 2.3 — Configuración de Alembic
 - **ID:** `2.3`
