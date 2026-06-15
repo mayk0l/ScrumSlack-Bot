@@ -231,7 +231,8 @@
 - **Dependencias:** `0.3`
 - **Descripción:** Wrapper async httpx sobre GitHub API v3 con retry y backoff.
 - **Criterio de aceptación:** Lista PRs abiertos y maneja HTTP 429.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Implementado con retry exponencial (3 intentos) y manejo de 429/5xx. Usa Bearer token.
 
 #### 2.5.2 — Slack Client (`src/infrastructure/slack_client.py`)
 - **ID:** `2.5.2`
@@ -240,7 +241,8 @@
 - **Dependencias:** `0.3`
 - **Descripción:** `create_slack_app()` y `SlackNotifier` con helpers de mensajería.
 - **Criterio de aceptación:** `AsyncApp` creada. Mensaje de prueba enviado.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Se agregó `aiohttp` a requirements.txt porque slack-bolt lo requiere.
 
 #### 2.5.3 — AI Client (`src/infrastructure/ai_client.py`)
 - **ID:** `2.5.3`
@@ -249,7 +251,7 @@
 - **Dependencias:** `0.3`
 - **Descripción:** Wrapper async para OpenRouter API (formato OpenAI).
 - **Criterio de aceptación:** Genera resumen de prueba y lanza `ExternalServiceError` si falla.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 #### 2.5.4 — Scheduler (`src/infrastructure/scheduler.py`)
 - **ID:** `2.5.4`
@@ -258,7 +260,7 @@
 - **Dependencias:** `0.1`
 - **Descripción:** `SchedulerService` con APScheduler async y `add_daily_job()`.
 - **Criterio de aceptación:** Jobs programados se ejecutan a la hora configurada.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
 
 ---
 

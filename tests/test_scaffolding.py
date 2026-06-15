@@ -90,6 +90,10 @@ IMPLEMENTED_PY_FILES = {
     "src/infrastructure/repositories/sprint_repo.py": ["class SprintRepositoryImpl", "SprintRepository"],
     "src/infrastructure/repositories/risk_repo.py": ["class RiskRepositoryImpl", "RiskRepository"],
     "src/infrastructure/repositories/metric_repo.py": ["class MetricRepositoryImpl", "MetricRepository"],
+    "src/infrastructure/github_client.py": ["class GitHubClient", "ExternalServiceError"],
+    "src/infrastructure/slack_client.py": ["class SlackNotifier", "AsyncApp"],
+    "src/infrastructure/ai_client.py": ["class AIClient", "ExternalServiceError"],
+    "src/infrastructure/scheduler.py": ["class SchedulerService", "AsyncIOScheduler"],
 }
 
 EXPECTED_CONFIG_FILES = [
