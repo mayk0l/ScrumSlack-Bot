@@ -112,8 +112,9 @@
 - **Esfuerzo:** XS
 - **Dependencias:** `0.1`
 - **Descripción:** Excepciones tipadas para errores de negocio.
-- **Criterio de aceptación:** `isinstance(EntityNotFoundError(...), DomainException)` es `True`.
-- **Estado:** 🔲
+- **Criterio de aceptación:** Cada excepción se puede lanzar con mensajes claros. `isinstance(EntityNotFoundError(...), DomainException)` es `True`.
+- **Estado:** ✅ Done
+- **Notas:** 5 excepciones de dominio implementadas. Tests en `tests/unit/test_exceptions.py`.
 
 #### 1.3 — Interfaces de Repositorios (`src/domain/repositories.py`)
 - **ID:** `1.3`

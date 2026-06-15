@@ -79,6 +79,7 @@ IMPLEMENTED_PY_FILES = {
     "src/main.py": ["FastAPI", "include_router"],
     "src/interfaces/api/routes.py": ["APIRouter", "@router.get"],
     "src/domain/models.py": ["@dataclass", "UUID", "uuid4"],
+    "src/domain/exceptions.py": ["class DomainException", "class EntityNotFoundError"],
 }
 
 EXPECTED_CONFIG_FILES = [
