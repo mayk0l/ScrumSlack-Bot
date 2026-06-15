@@ -1,0 +1,1 @@
+"""Módulo: member_repo."""

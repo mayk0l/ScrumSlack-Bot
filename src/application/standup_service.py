@@ -1,0 +1,1 @@
+"""Módulo: standup_service."""

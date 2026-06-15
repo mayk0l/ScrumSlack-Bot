@@ -31,7 +31,8 @@
 - **Dependencias:** Ninguna
 - **Descripción:** Crear árbol de directorios y archivos base vacíos según estructura definida.
 - **Criterio de aceptación:** Todos los `.py` contienen `"""Módulo: <nombre>."""`. Directorios con `__init__.py` vacío.
-- **Estado:** 🔲
+- **Estado:** ✅ Done
+- **Notas:** Scaffolding creado con 70 verificaciones pasando en `tests/test_scaffolding.py`. Se incluyó `.venv/` para ejecutar tests locales.
 
 #### 0.2.1 — `requirements.txt`
 - **ID:** `0.2.1`

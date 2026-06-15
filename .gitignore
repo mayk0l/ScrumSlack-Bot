@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+.venv/
+venv/
+.idea/
+.vscode/
+*.db
+*.sqlite3
+project_tracking.xlsx
