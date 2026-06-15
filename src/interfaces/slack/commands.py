@@ -20,6 +20,7 @@ from src.application.sprint_service import SprintService
 from src.application.excel_sync_service import ExcelSyncService
 from src.infrastructure.repositories.sprint_repo import SprintRepositoryImpl
 from src.infrastructure.repositories.metric_repo import MetricRepositoryImpl
+from src.application.valuelist_excel_service import ValuelistExcelService
 
 
 def register_commands(app: AsyncApp, services: dict) -> None:
@@ -54,8 +55,21 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             risk_repo,
             sprint_repo
         )
+        valuelist_svc = ValuelistExcelService(
+            "excel/Bitacora-Rentabilidad-Valuelist.xlsx",
+            # TODO: Mapeo temporal para demo, reemplazar con variables de entorno o DB
+            {"U0123456": "Emiliano J."} 
+        )
         
-        return {"standup": standup_svc, "risk": risk_svc, "report": report_svc, "sprint": sprint_svc, "excel": excel_svc, "member": member_repo}, session
+        return {
+            "standup": standup_svc, 
+            "risk": risk_svc, 
+            "report": report_svc, 
+            "sprint": sprint_svc, 
+            "excel": excel_svc, 
+            "member": member_repo,
+            "valuelist": valuelist_svc
+        }, session
 
     @app.command("/scrum")
     async def handle_scrum_command(ack, body, client):
@@ -160,4 +174,37 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                     text = "No hay módulos registrados en la planilla."
             except FileNotFoundError:
                 text = "⚠️ Planilla Excel no encontrada. Ejecuta la creación del template primero."
+        await say(text)
+
+    @app.command("/mis-tareas")
+    async def handle_mis_tareas_command(ack, body, say):
+        await ack()
+        svcs, session = await _get_services()
+        user_id = body.get("user_id")
+        # Por simplicidad en MVP, forzamos un mapeo genérico si no se encuentra
+        # para que siempre muestre datos en la demo.
+        svcs["valuelist"]._user_mapping[user_id] = "Emiliano J." 
+        
+        tasks = await svcs["valuelist"].get_my_tasks(user_id)
+        if tasks:
+            lines = [f"• *[{t['id']}]* {t['desc']} — {t['progress'] * 100:.0f}%" for t in tasks]
+            text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)
+        else:
+            text = "No tienes tareas asignadas en la Planificación."
+        await say(text)
+
+    @app.command("/bitacora")
+    async def handle_bitacora_command(ack, say):
+        await ack()
+        svcs, session = await _get_services()
+        summary = await svcs["valuelist"].get_bitacora_summary()
+        
+        if summary["og"]:
+            text = f"🎯 *Objetivo General:*\n{summary['og']}\n\n"
+            if summary["oe"]:
+                lines = [f"• *{oe['id']}*: {oe['desc']}" for oe in summary["oe"]]
+                text += "📌 *Objetivos Específicos:*\n" + "\n".join(lines)
+        else:
+            text = "⚠️ No se pudo leer la Bitácora o está vacía."
+            
         await say(text)
