@@ -74,6 +74,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/scrum")
     async def handle_scrum_command(ack, body, client):
         await ack()
+        from src.interfaces.slack.modals import build_standup_modal
         await client.views_open(
             trigger_id=body["trigger_id"],
             view=build_standup_modal(),
@@ -254,3 +255,19 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             await say(f"🔗 Evidencia guardada para *{task_id}* en la Hoja 5.")
         else:
             await say(f"❌ No se encontró la tarea *{task_id}* para adjuntar la evidencia.")
+
+    @app.command("/crear-tarea")
+    async def handle_crear_tarea_command(ack, body, client):
+        await ack()
+        from src.interfaces.slack.modals import build_crear_tarea_modal
+        await client.views_open(
+            trigger_id=body["trigger_id"],
+            view=build_crear_tarea_modal(),
+        )
+
+    @app.command("/gantt")
+    async def handle_gantt_command(ack, say):
+        await ack()
+        svcs, session = await _get_services()
+        gantt_text = await svcs["valuelist"].generate_gantt()
+        await say(f"📊 *Diagrama de Gantt (Planificación)*\n\n{gantt_text}")

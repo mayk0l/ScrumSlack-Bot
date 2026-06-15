@@ -121,3 +121,68 @@ class ValuelistExcelService:
                 return False
 
         return await asyncio.to_thread(_write)
+
+    async def create_task(self, act_id: str, desc: str, resp: str, start: str, end: str) -> bool:
+        """Agrega una nueva fila al final de la Hoja 3 (Planificación)."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                ws = wb["Planificación"]
+                
+                # Columnas: Actividad, Descripción, Responsable, Comienzo, Fin, % esp, % logro, Entregable, Comentarios
+                from datetime import datetime
+                try:
+                    start_dt = datetime.strptime(start, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end, "%Y-%m-%d")
+                except ValueError:
+                    start_dt = start
+                    end_dt = end
+                    
+                new_row = [act_id, desc, resp, start_dt, end_dt, 0.0, 0.0, "", ""]
+                ws.append(new_row)
+                wb.save(self._excel_path)
+                return True
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)
+
+    async def generate_gantt(self) -> str:
+        """Genera un diagrama Mermaid a partir de las fechas en la Hoja 3."""
+        def _read() -> str:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path, data_only=True)
+                ws = wb["Planificación"]
+                
+                lines = [
+                    "```mermaid",
+                    "gantt",
+                    "    title Cronograma de Planificación (Excel)",
+                    "    dateFormat  YYYY-MM-DD",
+                    "    axisFormat  %d-%b"
+                ]
+                
+                for row in ws.iter_rows(min_row=2):
+                    act_id = row[0].value
+                    desc = row[1].value
+                    start = row[3].value
+                    end = row[4].value
+                    
+                    if act_id and str(act_id).startswith("A") and start and end:
+                        # Clean dates if they are datetime objects
+                        from datetime import datetime
+                        if isinstance(start, datetime): start_str = start.strftime("%Y-%m-%d")
+                        else: start_str = str(start)[:10]
+                        
+                        if isinstance(end, datetime): end_str = end.strftime("%Y-%m-%d")
+                        else: end_str = str(end)[:10]
+                        
+                        safe_desc = str(desc).replace(":", "") if desc else "Tarea"
+                        lines.append(f"    {act_id} {safe_desc[:30]} : {act_id}, {start_str}, {end_str}")
+                        
+                lines.append("```")
+                return "\n".join(lines)
+            except Exception as e:
+                return f"Error generando Gantt: {e}"
+
+        return await asyncio.to_thread(_read)

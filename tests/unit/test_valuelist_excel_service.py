@@ -104,3 +104,47 @@ async def test_add_evidence(mock_load_workbook, service):
     assert success is True
     mock_ws_evi.append.assert_called_once_with(["A2.1", "Test Description", "http://github.com/test"])
     mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_create_task(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    success = await service.create_task("A5.5", "Nueva Tarea", "Emiliano J.", "2026-06-20", "2026-06-25")
+    
+    assert success is True
+    mock_ws.append.assert_called_once()
+    appended_row = mock_ws.append.call_args[0][0]
+    assert appended_row[0] == "A5.5"
+    assert appended_row[1] == "Nueva Tarea"
+    assert appended_row[2] == "Emiliano J."
+    assert appended_row[6] == 0.0
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_generate_gantt(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    from datetime import datetime
+    # Actividad, Descripción, Responsable, Comienzo, Fin
+    mock_row = [
+        MagicMock(value="A1.1"), 
+        MagicMock(value="Test"), 
+        MagicMock(), 
+        MagicMock(value=datetime(2026, 6, 1)), 
+        MagicMock(value=datetime(2026, 6, 5))
+    ]
+    mock_ws.iter_rows.return_value = [mock_row]
+    
+    gantt = await service.generate_gantt()
+    
+    assert "gantt" in gantt
+    assert "A1.1" in gantt
+    assert "2026-06-01" in gantt
