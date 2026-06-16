@@ -48,12 +48,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         )
         github_svc = GitHubService(github_client, pr_repo)
         risk_svc = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
-        report_svc = ReportService(standup_svc, github_svc, risk_svc)
         sprint_svc = SprintService(sprint_repo, metric_repo)
-        valuelist_svc = ValuelistExcelService(
-            settings.excel_file_path,
-            settings.user_mapping_dict
-        )
+        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+        report_svc = ReportService(standup_svc, github_svc, risk_svc, ai_client=None, valuelist_service=valuelist_svc)
         
         return {
             "standup": standup_svc, 
@@ -61,7 +58,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             "report": report_svc, 
             "sprint": sprint_svc, 
             "member": member_repo,
-            "valuelist": valuelist_svc
+            "valuelist": valuelist_svc,
+            "github": github_svc
         }, session
 
     @app.command("/ayuda-scrum")
@@ -176,6 +174,22 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 default_team_id, default_channel_id
             )
         await say(f"{summary}\n\n")
+
+    @app.command("/github")
+    async def handle_github_command(ack, say):
+        await ack()
+        if not settings.github_default_org:
+            await say("❌ GitHub sync no configurado (falta GITHUB_DEFAULT_ORG).")
+            return
+        await say("⚙️ *Sincronizando Pull Requests desde GitHub...*")
+        svcs, session = await _get_services()
+        async with session:
+            await svcs["github"].sync_pull_requests(
+                default_team_id,
+                settings.github_default_org,
+                [settings.github_default_org],
+            )
+        await say("✅ Sincronización completada.")
 
     @app.command("/test-standup")
     async def handle_test_standup_command(ack, body, client):
