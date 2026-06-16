@@ -192,6 +192,9 @@ class ValuelistExcelService:
                         safe_desc = str(desc).replace(":", "") if desc else "Tarea"
                         lines.append(f"    {act_id} {safe_desc[:30]} : {act_id}, {start_str}, {end_str}")
                         
+                if len(lines) == 5:
+                    return "⚠️ No hay tareas con fechas de inicio y fin en la Planificación para graficar."
+                    
                 lines.append("```")
                 return "\n".join(lines)
             except Exception as e:
