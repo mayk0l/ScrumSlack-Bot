@@ -37,6 +37,14 @@ class Settings(BaseSettings):
 
     # Excel
     excel_file_path: str = "project_tracking.xlsx"
+    user_mapping: str = '{"U0123456": "Emiliano J."}'
 
+    @property
+    def user_mapping_dict(self) -> dict:
+        import json
+        try:
+            return json.loads(self.user_mapping)
+        except Exception:
+            return {}
 
 settings = Settings()

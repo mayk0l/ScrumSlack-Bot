@@ -17,7 +17,7 @@ from src.infrastructure.repositories.risk_repo import RiskRepositoryImpl
 from src.infrastructure.repositories.pr_repo import PullRequestRepositoryImpl
 from src.application.github_service import GitHubService
 from src.application.sprint_service import SprintService
-from src.application.excel_sync_service import ExcelSyncService
+from src.application.sprint_service import SprintService
 from src.infrastructure.repositories.sprint_repo import SprintRepositoryImpl
 from src.infrastructure.repositories.metric_repo import MetricRepositoryImpl
 from src.application.valuelist_excel_service import ValuelistExcelService
@@ -50,16 +50,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         risk_svc = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
         report_svc = ReportService(standup_svc, github_svc, risk_svc)
         sprint_svc = SprintService(sprint_repo, metric_repo)
-        excel_svc = ExcelSyncService(
-            "project_tracking.xlsx",
-            metric_repo,
-            risk_repo,
-            sprint_repo
-        )
         valuelist_svc = ValuelistExcelService(
             settings.excel_file_path,
-            # TODO: Mapeo temporal para demo, reemplazar con variables de entorno o DB
-            {"U0123456": "Emiliano J."} 
+            settings.user_mapping_dict
         )
         
         return {
@@ -67,7 +60,6 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             "risk": risk_svc, 
             "report": report_svc, 
             "sprint": sprint_svc, 
-            "excel": excel_svc, 
             "member": member_repo,
             "valuelist": valuelist_svc
         }, session
