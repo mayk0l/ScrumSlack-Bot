@@ -148,7 +148,9 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             for action_id, action_data in block_data.items():
                 val = action_data.get("value", "")
                 
-                if action_id == "og_input":
+                if action_id == "proyecto_input":
+                    updates["PROYECTO"] = val
+                elif action_id == "og_input":
                     updates["OG"] = val
                 elif action_id == "nuevo_oe_input":
                     new_oe = val

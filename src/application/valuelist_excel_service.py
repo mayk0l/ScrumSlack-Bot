@@ -45,23 +45,28 @@ class ValuelistExcelService:
                 wb = openpyxl.load_workbook(self._excel_path, data_only=True)
                 ws = wb["Bitácora"]
                 
-                summary = {"og": "", "oe": []}
+                summary = {"proyecto": "", "og": "", "oe": []}
                 
-                for row in ws.iter_rows(min_row=2, max_row=8, values_only=True):
+                for row in ws.iter_rows(min_row=2, values_only=True):
                     col_b = row[1]
                     col_c = row[2]
+                    if not col_b:
+                        continue
+                        
+                    b_str = str(col_b).strip().upper()
+                    c_str = str(col_c).strip() if col_c else ""
                     
-                    if col_b == "OG":
-                        summary["og"] = str(col_c) if col_c else ""
-                    elif col_b and str(col_b).startswith("OE"):
-                        summary["oe"].append({
-                            "id": str(col_b),
-                            "desc": str(col_c) if col_c else ""
-                        })
+                    if b_str == "PROYECTO":
+                        summary["proyecto"] = c_str
+                    elif b_str == "OG":
+                        summary["og"] = c_str
+                    elif b_str.startswith("OE"):
+                        # Keep even if empty so it can be edited/deleted
+                        summary["oe"].append({"id": b_str, "desc": c_str})
                             
                 return summary
             except Exception:
-                return {"og": "", "oe": []}
+                return {"proyecto": "", "og": "", "oe": []}
 
         return await asyncio.to_thread(_read)
 
@@ -287,60 +292,59 @@ class ValuelistExcelService:
                 thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), 
                                      top=Side(style='thin'), bottom=Side(style='thin'))
 
-                # 1. Update existing
-                last_oe_row = 1
-                last_oe_num = 0
-                rows_to_delete = []
+                # 1. Extract current data in case something is missing in updates
+                current_data = {"PROYECTO": "", "OG": ""}
+                oes = []
+                for r in range(2, ws.max_row + 1):
+                    b = ws.cell(row=r, column=2).value
+                    c = ws.cell(row=r, column=3).value
+                    if b:
+                        b_str = str(b).strip().upper()
+                        c_str = str(c).strip() if c else ""
+                        if b_str in ["PROYECTO", "OG"]:
+                            current_data[b_str] = c_str
+                        elif b_str.startswith("OE"):
+                            oes.append({"id": b_str, "desc": c_str})
                 
-                for row_idx in range(2, ws.max_row + 10): # Look slightly beyond max_row
-                    col_b_val = ws.cell(row=row_idx, column=2).value
-                    if not col_b_val:
-                        continue
-                        
-                    obj_id = str(col_b_val).strip().upper()
-                    
-                    if obj_id in updates:
-                        new_val = str(updates[obj_id]).strip()
-                        # If OE and empty, mark for deletion
-                        if not new_val and obj_id.startswith("OE"):
-                            rows_to_delete.append(row_idx)
-                        else:
-                            ws.cell(row=row_idx, column=3).value = new_val
-                            if obj_id.startswith("OE"):
-                                last_oe_row = max(last_oe_row, row_idx)
-                                try:
-                                    num = int(obj_id.replace("OE", "").strip())
-                                    last_oe_num = max(last_oe_num, num)
-                                except ValueError:
-                                    pass
-                    elif obj_id.startswith("OE"):
-                        last_oe_row = max(last_oe_row, row_idx)
+                # 2. Apply updates
+                if "PROYECTO" in updates: current_data["PROYECTO"] = updates["PROYECTO"]
+                if "OG" in updates: current_data["OG"] = updates["OG"]
+                
+                new_oes = []
+                for oe in oes:
+                    oe_id = oe["id"]
+                    if oe_id in updates:
+                        desc = str(updates[oe_id]).strip()
+                        if desc: # If not empty, we keep it
+                            new_oes.append({"id": oe_id, "desc": desc})
+                    else:
+                        if oe["desc"]: # Keep if it had text
+                            new_oes.append(oe)
+                            
+                # 3. Add new OE if provided
+                if new_oe.strip():
+                    last_num = 0
+                    for oe in new_oes:
                         try:
-                            num = int(obj_id.replace("OE", "").strip())
-                            last_oe_num = max(last_oe_num, num)
+                            num = int(oe["id"].replace("OE", "").strip())
+                            last_num = max(last_num, num)
                         except ValueError:
                             pass
-                
-                for r in sorted(rows_to_delete, reverse=True):
-                    ws.delete_rows(r)
-                    if r <= last_oe_row:
-                        last_oe_row -= 1
-                
-                # 2. Insert new OE if provided
-                if new_oe.strip():
-                    new_oe_id = f"OE{last_oe_num + 1}"
-                    insert_row = last_oe_row + 1 if last_oe_row > 1 else 3
+                    new_oes.append({"id": f"OE{last_num + 1}", "desc": new_oe.strip()})
                     
-                    # Move rows down if needed, but usually Bitácora is free below OE
-                    ws.insert_rows(insert_row)
-                    ws.cell(row=insert_row, column=2).value = new_oe_id
-                    ws.cell(row=insert_row, column=3).value = new_oe.strip()
+                # 4. Clear existing rows and rewrite everything sequentially
+                ws.delete_rows(2, ws.max_row)
+                
+                ws.append(["", "PROYECTO", current_data["PROYECTO"]])
+                ws.append(["", "OG", current_data["OG"]])
+                for oe in new_oes:
+                    ws.append(["", oe["id"], oe["desc"]])
 
-                # 3. Apply Premium Styles to the whole sheet
+                # 5. Apply Premium Styles
                 ws.column_dimensions['B'].width = 15
                 ws.column_dimensions['C'].width = 80
                 
-                # Header Style (Row 1)
+                # Header Style
                 ws.cell(row=1, column=2).value = "ID Objetivo"
                 ws.cell(row=1, column=3).value = "Descripción"
                 for col in (2, 3):
@@ -354,13 +358,11 @@ class ValuelistExcelService:
                 for row_idx in range(2, ws.max_row + 1):
                     val_b = ws.cell(row=row_idx, column=2).value
                     if val_b:
-                        # ID column
                         c_b = ws.cell(row=row_idx, column=2)
                         c_b.font = bold_font
                         c_b.alignment = align_center
                         c_b.border = thin_border
                         
-                        # Desc column
                         c_c = ws.cell(row=row_idx, column=3)
                         c_c.alignment = align_left
                         c_c.border = thin_border

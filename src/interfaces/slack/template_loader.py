@@ -65,6 +65,19 @@ def build_bitacora_completa_modal(bitacora: dict[str, Any]) -> dict[str, Any]:
     """Genera dinámicamente un modal con todos los objetivos."""
     blocks = []
     
+    # Nombre del Proyecto
+    blocks.append({
+        "type": "input",
+        "block_id": "proyecto_block",
+        "label": {"type": "plain_text", "text": "Nombre del Proyecto"},
+        "element": {
+            "type": "plain_text_input",
+            "action_id": "proyecto_input",
+            "initial_value": bitacora.get("proyecto", ""),
+            "multiline": False
+        }
+    })
+    
     # Objetivo General
     blocks.append({
         "type": "input",

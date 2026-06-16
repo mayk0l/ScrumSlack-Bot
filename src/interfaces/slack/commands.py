@@ -246,12 +246,17 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         container = get_container()
         summary = await container.valuelist_svc.get_bitacora_summary()
         
-        if summary["og"]:
-            text = f"🎯 *Objetivo General:*\n{summary['og']}\n\n"
-            if summary["oe"]:
+        text = ""
+        if summary.get("proyecto"):
+            text += f"🏢 *Proyecto:*\n{summary['proyecto']}\n\n"
+            
+        if summary.get("og"):
+            text += f"🎯 *Objetivo General:*\n{summary['og']}\n\n"
+            if summary.get("oe"):
                 lines = [f"• *{oe['id']}*: {oe['desc']}" for oe in summary["oe"]]
                 text += "📌 *Objetivos Específicos:*\n" + "\n".join(lines)
-        else:
+        
+        if not text:
             text = "⚠️ No se pudo leer la Bitácora o está vacía."
             
         await say(f"{text}\n\n")
