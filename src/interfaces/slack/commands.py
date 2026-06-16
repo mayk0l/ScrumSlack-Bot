@@ -306,8 +306,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             channel_id = body.get("channel_id")
             await client.files_upload_v2(
                 channel=channel_id,
-                file="excel/Bitacora-Rentabilidad-Valuelist.xlsx",
-                title="Bitacora-Rentabilidad-Valuelist.xlsx",
+                file=settings.excel_file_path,
+                title="project_tracking.xlsx",
                 initial_comment="📂 Aquí tienes la última versión del Excel de Valuelist actualizada con los datos de Slack."
             )
         except Exception as e:
