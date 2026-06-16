@@ -271,3 +271,17 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         svcs, session = await _get_services()
         gantt_text = await svcs["valuelist"].generate_gantt()
         await say(f"📊 *Diagrama de Gantt (Planificación)*\n\n{gantt_text}")
+
+    @app.command("/descargar-excel")
+    async def handle_descargar_excel_command(ack, body, client, say):
+        await ack()
+        try:
+            channel_id = body.get("channel_id")
+            await client.files_upload_v2(
+                channel=channel_id,
+                file="excel/Bitacora-Rentabilidad-Valuelist.xlsx",
+                title="Bitacora-Rentabilidad-Valuelist.xlsx",
+                initial_comment="📂 Aquí tienes la última versión del Excel de Valuelist actualizada con los datos de Slack."
+            )
+        except Exception as e:
+            await say(f"❌ Error al enviar el archivo: {e}")

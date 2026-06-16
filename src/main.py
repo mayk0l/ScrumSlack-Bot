@@ -102,9 +102,14 @@ async def lifespan(app: FastAPI):
             sprint_service = __import__(
                 "src.application.sprint_service", fromlist=["SprintService"]
             ).SprintService(sprint_repo=SprintRepositoryImpl(session), metric_repo=metric_repo)
+            
+            valuelist_svc = __import__(
+                "src.application.valuelist_excel_service", fromlist=["ValuelistExcelService"]
+            ).ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+            
             report_service = __import__(
                 "src.application.report_service", fromlist=["ReportService"]
-            ).ReportService(standup_service, github_service, risk_service)
+            ).ReportService(standup_service, github_service, risk_service, ai_client=None, valuelist_service=valuelist_svc)
 
             teams = await team_repo.get_all()
             for team in teams:

@@ -23,11 +23,13 @@ class ReportService:
         github_service: GitHubService,
         risk_service: RiskService,
         ai_client: AIClient | None = None,
+        valuelist_service = None,
     ):
         self._standup_service = standup_service
         self._github_service = github_service
         self._risk_service = risk_service
         self._ai_client = ai_client
+        self._valuelist_service = valuelist_service
 
     async def generate_daily_summary(
         self, team_id: UUID, slack_channel_id: str
@@ -88,13 +90,20 @@ class ReportService:
     ) -> str:
         """Genera un resumen ejecutivo usando IA."""
         summary = await self.generate_daily_summary(team_id, slack_channel_id)
+        
+        context_prompt = ""
+        if self._valuelist_service:
+            bitacora = await self._valuelist_service.get_bitacora_summary()
+            if bitacora and bitacora.get("og"):
+                context_prompt = f"El Objetivo General del proyecto es: {bitacora['og']}. "
+
         if self._ai_client is None:
             return summary
 
         try:
             analysis = await self._ai_client.generate_summary(
                 prompt=(
-                    "Eres un Scrum Master. Genera un resumen ejecutivo "
+                    f"Eres un Scrum Master. {context_prompt}Genera un resumen ejecutivo "
                     "conciso en español del siguiente reporte diario. "
                     "Enfócate en accionables y riesgos."
                 ),

@@ -90,3 +90,26 @@ async def test_generate_daily_summary_handles_empty_data():
     assert "Sin respuestas de standup" in summary
     assert "Sin PRs abiertos" in summary
     assert "Sin riesgos activos" in summary
+
+class FakeAIClient:
+    async def generate_summary(self, prompt, context):
+        return f"AI_PROMPT_WAS: {prompt}"
+
+class FakeValuelistService:
+    async def get_bitacora_summary(self):
+        return {"og": "Terminar todo"}
+
+@pytest.mark.asyncio
+async def test_generate_ai_summary_with_context():
+    team_id = uuid4()
+    service = ReportService(
+        standup_service=FakeStandupService(),
+        github_service=FakeGitHubService(),
+        risk_service=FakeRiskService(),
+        ai_client=FakeAIClient(),
+        valuelist_service=FakeValuelistService()
+    )
+
+    result = await service.generate_ai_summary(team_id, "C1")
+    assert "AI_PROMPT_WAS" in result
+    assert "Terminar todo" in result
