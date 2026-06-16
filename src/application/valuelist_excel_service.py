@@ -8,13 +8,11 @@ class ValuelistExcelService:
     la Bitácora de Rentabilidad de Valuelist (Excel).
     """
 
-    def __init__(self, excel_path: str, user_mapping: dict[str, str] = None):
+    def __init__(self, excel_path: str):
         self._excel_path = excel_path
-        self._user_mapping = user_mapping or {}
 
-    async def get_my_tasks(self, slack_user_id: str) -> list[dict[str, Any]]:
+    async def get_my_tasks(self, target_name: str) -> list[dict[str, Any]]:
         """Busca las tareas asignadas al usuario en la Hoja 3 (Planificación)."""
-        target_name = self._user_mapping.get(slack_user_id)
         if not target_name:
             return []
 

@@ -250,13 +250,15 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             await session.commit()
 
     @app.view("crear_tarea_submission")
-    async def handle_crear_tarea_submission(ack, body, view):
+    async def handle_crear_tarea_submission(ack, body, view, client):
         await ack()
         values = view["state"]["values"]
         act_id = values["id_block"]["id_input"]["value"]
         desc = values["desc_block"]["desc_input"]["value"]
         resp_id = values["resp_block"]["resp_input"]["selected_user"]
-        resp = f"<@{resp_id}>"
+        
+        user_info = await client.users_info(user=resp_id)
+        resp = user_info["user"].get("real_name") or user_info["user"].get("name")
         start = values["start_block"]["start_input"]["value"]
         end = values["end_block"]["end_input"]["value"]
 
@@ -331,7 +333,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             )
 
     @app.view("editar_tarea_submission")
-    async def handle_editar_tarea_submission(ack, body, view):
+    async def handle_editar_tarea_submission(ack, body, view, client):
         await ack()
         task_id = view["private_metadata"]
         values = view["state"]["values"]
@@ -348,7 +350,9 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         else:
             desc = values["desc_block"]["desc_input"]["value"]
             resp_id = values["resp_block"]["resp_input"]["selected_user"]
-            resp = f"<@{resp_id}>"
+            
+            user_info = await client.users_info(user=resp_id)
+            resp = user_info["user"].get("real_name") or user_info["user"].get("name")
             start = values["start_block"]["start_input"]["value"]
             end = values["end_block"]["end_input"]["value"]
             await valuelist_svc.update_task_details(task_id, desc, resp, start, end)

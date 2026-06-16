@@ -226,15 +226,15 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         await say(f"{text}\n\n")
 
     @app.command("/mis-tareas")
-    async def handle_mis_tareas_command(ack, body, say):
+    async def handle_mis_tareas_command(ack, body, client, say):
         await ack()
         svcs, session = await _get_services()
         user_id = body.get("user_id")
-        # Por simplicidad en MVP, forzamos un mapeo genérico si no se encuentra
-        # para que siempre muestre datos en la demo.
-        svcs["valuelist"]._user_mapping[user_id] = "Emiliano J." 
         
-        tasks = await svcs["valuelist"].get_my_tasks(user_id)
+        user_info = await client.users_info(user=user_id)
+        real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+        
+        tasks = await svcs["valuelist"].get_my_tasks(real_name)
         if tasks:
             lines = [f"• *[{t['id']}]* {t['desc']} — {t['progress'] * 100:.0f}%" for t in tasks]
             text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)

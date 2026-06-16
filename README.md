@@ -70,7 +70,7 @@ cp .env.example .env
 cp project_tracking.example.xlsx project_tracking.xlsx
 ```
 
-Edita el `.env` con tus credenciales y ajusta el mapeo de `USER_MAPPING` con tus IDs de Slack. 
+Edita el `.env` con tus credenciales. 
 **Importante:** Para desarrollo local sin exponer un endpoint HTTP, rellena `SLACK_APP_TOKEN` con un token `xapp-...` de tu app en Slack y asegúrate de activar el **Socket Mode**. El bot lo detectará y se conectará automáticamente.
 
 ### 2. Levantar la aplicación
