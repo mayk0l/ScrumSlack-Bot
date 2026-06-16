@@ -1,0 +1,54 @@
+{
+    "type": "modal",
+    "callback_id": "standup_submission",
+    "title": {
+        "type": "plain_text",
+        "text": "Daily Standup"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Enviar"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "yesterday_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Qué hiciste ayer?"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "yesterday_input",
+                "multiline": true
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "today_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Qué harás hoy?"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "today_input",
+                "multiline": true
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "blockers_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Tienes bloqueos?"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "blockers_input",
+                "multiline": true
+            },
+            "optional": true
+        }
+    ]
+}

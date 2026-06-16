@@ -1,0 +1,74 @@
+{
+    "type": "modal",
+    "callback_id": "crear_tarea_submission",
+    "title": {
+        "type": "plain_text",
+        "text": "Crear Tarea"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Guardar"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "id_block",
+            "label": {
+                "type": "plain_text",
+                "text": "ID Tarea (Ej. A2.5)"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "id_input"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "desc_block",
+            "label": {
+                "type": "plain_text",
+                "text": "Descripción"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "desc_input"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "resp_block",
+            "label": {
+                "type": "plain_text",
+                "text": "Responsable"
+            },
+            "element": {
+                "type": "users_select",
+                "action_id": "resp_input"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "start_block",
+            "label": {
+                "type": "plain_text",
+                "text": "Fecha Inicio (YYYY-MM-DD)"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "start_input"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "end_block",
+            "label": {
+                "type": "plain_text",
+                "text": "Fecha Fin (YYYY-MM-DD)"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "end_input"
+            }
+        }
+    ]
+}

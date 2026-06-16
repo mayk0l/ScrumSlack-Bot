@@ -1,0 +1,29 @@
+{
+    "type": "modal",
+    "callback_id": "editar_bitacora_submission",
+    "private_metadata": "{obj_id}",
+    "title": {
+        "type": "plain_text",
+        "text": "Editar {obj_id}"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Guardar"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "desc_block",
+            "label": {
+                "type": "plain_text",
+                "text": "Descripción"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "desc_input",
+                "initial_value": "{current_desc}",
+                "multiline": true
+            }
+        }
+    ]
+}

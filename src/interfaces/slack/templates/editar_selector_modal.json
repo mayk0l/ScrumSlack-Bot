@@ -1,0 +1,27 @@
+{
+    "type": "modal",
+    "callback_id": "editar_selector_submission",
+    "title": {
+        "type": "plain_text",
+        "text": "Centro de Edición"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Siguiente"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "seleccion_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Qué elemento deseas editar?"
+            },
+            "element": {
+                "type": "static_select",
+                "action_id": "seleccion_input",
+                "option_groups": []
+            }
+        }
+    ]
+}
