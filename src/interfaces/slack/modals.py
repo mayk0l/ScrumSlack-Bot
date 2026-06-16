@@ -74,15 +74,7 @@ def build_crear_tarea_modal() -> dict:
                 "type": "input",
                 "block_id": "resp_block",
                 "label": {"type": "plain_text", "text": "Responsable"},
-                "element": {
-                    "type": "static_select",
-                    "action_id": "resp_input",
-                    "placeholder": {"type": "plain_text", "text": "Selecciona responsable"},
-                    "options": [
-                        {"text": {"type": "plain_text", "text": "Emiliano J."}, "value": "Emiliano J."},
-                        {"text": {"type": "plain_text", "text": "Diego C."}, "value": "Diego C."}
-                    ]
-                },
+                "element": {"type": "users_select", "action_id": "resp_input"},
             },
             {
                 "type": "input",
@@ -160,13 +152,8 @@ def build_editar_tarea_modal(task: dict) -> dict:
                 "block_id": "resp_block",
                 "label": {"type": "plain_text", "text": "Responsable"},
                 "element": {
-                    "type": "static_select",
-                    "action_id": "resp_input",
-                    "initial_option": {"text": {"type": "plain_text", "text": task["resp"]}, "value": task["resp"]} if task["resp"] else None,
-                    "options": [
-                        {"text": {"type": "plain_text", "text": "Emiliano J."}, "value": "Emiliano J."},
-                        {"text": {"type": "plain_text", "text": "Diego C."}, "value": "Diego C."}
-                    ]
+                    "type": "users_select",
+                    "action_id": "resp_input"
                 },
             },
             {
@@ -268,7 +255,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         values = view["state"]["values"]
         act_id = values["id_block"]["id_input"]["value"]
         desc = values["desc_block"]["desc_input"]["value"]
-        resp = values["resp_block"]["resp_input"]["selected_option"]["value"]
+        resp_id = values["resp_block"]["resp_input"]["selected_user"]
+        resp = f"<@{resp_id}>"
         start = values["start_block"]["start_input"]["value"]
         end = values["end_block"]["end_input"]["value"]
 
@@ -359,7 +347,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             await valuelist_svc.delete_task_by_id(task_id)
         else:
             desc = values["desc_block"]["desc_input"]["value"]
-            resp = values["resp_block"]["resp_input"]["selected_option"]["value"]
+            resp_id = values["resp_block"]["resp_input"]["selected_user"]
+            resp = f"<@{resp_id}>"
             start = values["start_block"]["start_input"]["value"]
             end = values["end_block"]["end_input"]["value"]
             await valuelist_svc.update_task_details(task_id, desc, resp, start, end)
