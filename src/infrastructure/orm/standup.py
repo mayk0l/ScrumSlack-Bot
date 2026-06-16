@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from uuid import UUID
+from typing import Optional
 
 from sqlalchemy import ARRAY, Date, DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
@@ -42,7 +43,7 @@ class StandupSessionORM(Base):
     slack_thread_ts: Mapped[str] = mapped_column(String(50), default="")
 
     team: Mapped["TeamORM"] = relationship(back_populates="standup_sessions")
-    sprint: Mapped["SprintORM" | None] = relationship(back_populates="standup_sessions")
+    sprint: Mapped[Optional["SprintORM"]] = relationship(back_populates="standup_sessions")
     responses: Mapped[list["StandupResponseORM"]] = relationship(back_populates="session")
 
     def to_domain(self) -> StandupSessionDomain:

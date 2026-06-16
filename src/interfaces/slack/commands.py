@@ -256,6 +256,18 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             
         await say(f"{text}\n\n")
 
+    @app.command("/editar-bitacora")
+    async def handle_editar_bitacora_command(ack, body, client):
+        await ack()
+        container = get_container()
+        bitacora = await container.valuelist_svc.get_bitacora_summary()
+        
+        from src.interfaces.slack.template_loader import build_bitacora_completa_modal
+        await client.views_open(
+            trigger_id=body["trigger_id"],
+            view=build_bitacora_completa_modal(bitacora),
+        )
+
     @app.command("/avance")
     async def handle_avance_command(ack, body, say):
         await ack()

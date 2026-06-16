@@ -13,7 +13,7 @@ from src.interfaces.slack.template_loader import (
     build_crear_tarea_modal,
     build_editar_selector_modal,
     build_editar_tarea_modal,
-    build_editar_bitacora_modal
+    build_bitacora_completa_modal
 )
 
 from src.application.standup_service import StandupService
@@ -102,30 +102,10 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                     errors={"seleccion_block": "No se encontró la tarea seleccionada."}
                 )
         elif tipo == "bitacora":
-            from src.container import get_container
-            valuelist_svc = get_container().valuelist_svc
-            bitacora = await valuelist_svc.get_bitacora_summary()
-            
-            item_id_upper = item_id.upper()
-            current_desc = None
-            if item_id_upper == "OG":
-                current_desc = bitacora.get("og", "")
-            elif item_id_upper.startswith("OE"):
-                for oe in bitacora.get("oe", []):
-                    if oe["id"] == item_id_upper:
-                        current_desc = oe["desc"]
-                        break
-            
-            if current_desc is not None:
-                await ack(
-                    response_action="push",
-                    view=build_editar_bitacora_modal(item_id_upper, current_desc)
-                )
-            else:
-                await ack(
-                    response_action="errors",
-                    errors={"seleccion_block": "ID inválido para Bitácora."}
-                )
+            await ack(
+                response_action="errors",
+                errors={"seleccion_block": "La bitácora ahora se edita con el comando /editar-bitacora."}
+            )
         else:
             await ack(
                 response_action="errors",
@@ -156,13 +136,32 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             end = values["end_block"]["end_input"]["value"]
             await valuelist_svc.update_task_details(task_id, desc, resp, start, end)
 
-    @app.view("editar_bitacora_submission")
-    async def handle_editar_bitacora_submission(ack, body, view):
+    @app.view("bitacora_completa_submission")
+    async def handle_bitacora_completa_submission(ack, body, view, client):
         await ack()
-        obj_id = view["private_metadata"]
         values = view["state"]["values"]
-        new_desc = values["desc_block"]["desc_input"]["value"]
         
+        updates = {}
+        new_oe = ""
+        
+        for block_id, block_data in values.items():
+            for action_id, action_data in block_data.items():
+                val = action_data.get("value", "")
+                
+                if action_id == "og_input":
+                    updates["OG"] = val
+                elif action_id == "nuevo_oe_input":
+                    new_oe = val
+                elif action_id.endswith("_input") and action_id.startswith("OE"):
+                    # action_id looks like "OE1_input"
+                    oe_id = action_id.replace("_input", "")
+                    updates[oe_id] = val
+                    
         from src.container import get_container
         valuelist_svc = get_container().valuelist_svc
-        await valuelist_svc.update_bitacora(obj_id, new_desc)
+        
+        success = await valuelist_svc.update_bitacora_full(updates, new_oe)
+        
+        # Optional notify
+        # user_id = body["user"]["id"]
+        # await client.chat_postMessage(channel=user_id, text="✅ Bitácora actualizada y estilos aplicados.")

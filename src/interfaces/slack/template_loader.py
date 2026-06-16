@@ -61,10 +61,55 @@ def build_editar_tarea_modal(task: dict) -> dict[str, Any]:
     }
     return _replace_placeholders(template, replacements)
 
-def build_editar_bitacora_modal(obj_id: str, current_desc: str) -> dict[str, Any]:
-    template = load_template("editar_bitacora_modal.json")
-    replacements = {
-        "obj_id": obj_id,
-        "current_desc": current_desc
+def build_bitacora_completa_modal(bitacora: dict[str, Any]) -> dict[str, Any]:
+    """Genera dinámicamente un modal con todos los objetivos."""
+    blocks = []
+    
+    # Objetivo General
+    blocks.append({
+        "type": "input",
+        "block_id": "og_block",
+        "label": {"type": "plain_text", "text": "Objetivo General (OG)"},
+        "element": {
+            "type": "plain_text_input",
+            "action_id": "og_input",
+            "initial_value": bitacora.get("og", ""),
+            "multiline": True
+        }
+    })
+    
+    # Objetivos Específicos (OEs)
+    for oe in bitacora.get("oe", []):
+        blocks.append({
+            "type": "input",
+            "block_id": f"oe_{oe['id']}_block",
+            "label": {"type": "plain_text", "text": oe["id"]},
+            "element": {
+                "type": "plain_text_input",
+                "action_id": f"{oe['id']}_input",
+                "initial_value": oe["desc"],
+                "multiline": True
+            }
+        })
+        
+    # Campo para agregar uno nuevo
+    blocks.append({
+        "type": "input",
+        "block_id": "nuevo_oe_block",
+        "optional": True,
+        "label": {"type": "plain_text", "text": "➕ Agregar Nuevo Objetivo Específico"},
+        "element": {
+            "type": "plain_text_input",
+            "action_id": "nuevo_oe_input",
+            "multiline": True,
+            "placeholder": {"type": "plain_text", "text": "Escribe un nuevo OE aquí..."}
+        }
+    })
+    
+    return {
+        "type": "modal",
+        "callback_id": "bitacora_completa_submission",
+        "title": {"type": "plain_text", "text": "Editar Bitácora"},
+        "submit": {"type": "plain_text", "text": "Guardar Todo"},
+        "blocks": blocks
     }
-    return _replace_placeholders(template, replacements)

@@ -271,25 +271,87 @@ class ValuelistExcelService:
 
         return await asyncio.to_thread(_write)
 
-    async def update_bitacora(self, obj_id: str, new_desc: str) -> bool:
-        """Actualiza el texto de un objetivo en la Hoja 1 (Bitácora)."""
+    async def update_bitacora_full(self, updates: dict[str, str], new_oe: str = "") -> bool:
+        """Actualiza todos los objetivos de la Bitácora dinámicamente, agrega un nuevo OE si se provee, y aplica estilos."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
                 ws = wb["Bitácora"]
                 
-                mapping = {
-                    "OG": 2, "OE1": 3, "OE2": 4, "OE3": 5, 
-                    "OE4": 6, "OE5": 7, "OE6": 8
-                }
+                from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+                header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+                header_font = Font(color="FFFFFF", bold=True, size=12)
+                bold_font = Font(bold=True)
+                align_center = Alignment(horizontal="center", vertical="center")
+                align_left = Alignment(horizontal="left", vertical="top", wrap_text=True)
+                thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                                     top=Side(style='thin'), bottom=Side(style='thin'))
+
+                # 1. Update existing
+                last_oe_row = 1
+                last_oe_num = 0
                 
-                row_idx = mapping.get(obj_id.upper())
-                if row_idx:
-                    ws.cell(row=row_idx, column=2).value = new_desc
-                    wb.save(self._excel_path)
-                    return True
-                return False
-            except Exception:
+                for row_idx in range(2, ws.max_row + 10): # Look slightly beyond max_row
+                    col_b_val = ws.cell(row=row_idx, column=2).value
+                    if not col_b_val:
+                        continue
+                        
+                    obj_id = str(col_b_val).strip().upper()
+                    
+                    if obj_id in updates:
+                        ws.cell(row=row_idx, column=3).value = updates[obj_id]
+                        
+                    if obj_id.startswith("OE"):
+                        last_oe_row = max(last_oe_row, row_idx)
+                        try:
+                            num = int(obj_id.replace("OE", "").strip())
+                            last_oe_num = max(last_oe_num, num)
+                        except ValueError:
+                            pass
+                
+                # 2. Insert new OE if provided
+                if new_oe.strip():
+                    new_oe_id = f"OE{last_oe_num + 1}"
+                    insert_row = last_oe_row + 1 if last_oe_row > 1 else 3
+                    
+                    # Move rows down if needed, but usually Bitácora is free below OE
+                    ws.insert_rows(insert_row)
+                    ws.cell(row=insert_row, column=2).value = new_oe_id
+                    ws.cell(row=insert_row, column=3).value = new_oe.strip()
+
+                # 3. Apply Premium Styles to the whole sheet
+                ws.column_dimensions['B'].width = 15
+                ws.column_dimensions['C'].width = 80
+                
+                # Header Style (Row 1)
+                ws.cell(row=1, column=2).value = "ID Objetivo"
+                ws.cell(row=1, column=3).value = "Descripción"
+                for col in (2, 3):
+                    cell = ws.cell(row=1, column=col)
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = align_center
+                    cell.border = thin_border
+                
+                # Content Style
+                for row_idx in range(2, ws.max_row + 1):
+                    val_b = ws.cell(row=row_idx, column=2).value
+                    if val_b:
+                        # ID column
+                        c_b = ws.cell(row=row_idx, column=2)
+                        c_b.font = bold_font
+                        c_b.alignment = align_center
+                        c_b.border = thin_border
+                        
+                        # Desc column
+                        c_c = ws.cell(row=row_idx, column=3)
+                        c_c.alignment = align_left
+                        c_c.border = thin_border
+                
+                wb.save(self._excel_path)
+                return True
+            except Exception as e:
+                print(f"Error updating bitacora: {e}")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -326,7 +388,7 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def get_all_edit_options(self) -> dict[str, list[dict[str, str]]]:
-        """Devuelve opciones agrupadas de Tareas y Bitácora para el selector de Slack."""
+        """Devuelve opciones agrupadas de Tareas para el selector de Slack."""
         def _read() -> dict[str, list[dict[str, str]]]:
             options = {"tareas": [], "bitacora": []}
             try:
@@ -343,17 +405,6 @@ class ValuelistExcelService:
                                 "text": {"type": "plain_text", "text": f"{act_id} - {desc}"},
                                 "value": f"tarea|{act_id}"
                             })
-                            
-                # Bitácora
-                ws_bit = wb["Bitácora"]
-                mapping = {"OG": 2, "OE1": 3, "OE2": 4, "OE3": 5, "OE4": 6, "OE5": 7, "OE6": 8}
-                for obj_id, r in mapping.items():
-                    val = ws_bit.cell(row=r, column=2).value
-                    desc = str(val)[:50] if val else "Sin descripción"
-                    options["bitacora"].append({
-                        "text": {"type": "plain_text", "text": f"{obj_id} - {desc}"},
-                        "value": f"bitacora|{obj_id}"
-                    })
                     
                 return options
             except Exception:
