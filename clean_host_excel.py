@@ -25,12 +25,12 @@ if "Evidencias" in wb.sheetnames:
     if max_r >= 2:
         ws.delete_rows(2, max_r)
 
-# 4. Clean Gantt
+# 4. Clean Gantt COMPLETELY below headers
 if "Gantt" in wb.sheetnames:
     ws = wb["Gantt"]
-    for row in ws.iter_rows(min_row=5, max_row=100, min_col=1, max_col=1):
-        if row[0].value:
-            row[0].value = None
+    max_r = ws.max_row
+    if max_r >= 3:
+        ws.delete_rows(3, max_r)
 
 # 5. Clean Bitácora completely
 ws = wb["Bitácora"]
@@ -39,10 +39,10 @@ ws = wb["Bitácora"]
 for r in range(2, 9):
     ws.cell(row=r, column=3, value="")
 
-# Delete everything below row 8 (to wipe out the extra text the user saw)
+# Delete everything below row 8
 max_r = ws.max_row
 if max_r >= 9:
     ws.delete_rows(9, max_r)
 
 wb.save("project_tracking.xlsx")
-print("Cleaned project_tracking.xlsx completely, including Bitácora bottom rows.")
+print("Cleaned project_tracking.xlsx, wiped Gantt rows 3+.")

@@ -185,6 +185,35 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             )
         await say(f"{summary}\n\n")
 
+    @app.command("/test-standup")
+    async def handle_test_standup_command(ack, body, client):
+        await ack()
+        from src.infrastructure.slack_client import SlackNotifier
+        from src.application.notification_service import NotificationService
+        
+        channel_id = body.get("channel_id")
+        notifier = SlackNotifier(client)
+        svc = NotificationService(notifier)
+        await svc.send_standup_reminder(channel_id)
+
+    @app.command("/test-resumen")
+    async def handle_test_resumen_command(ack, body, client, say):
+        await ack()
+        await say("⚙️ *Simulando envío automático del resumen diario...*")
+        svcs, session = await _get_services()
+        async with session:
+            # Reusa la misma lógica del reporte, pero enviada como el servicio de notificaciones
+            summary = await svcs["report"].generate_daily_summary(
+                default_team_id, default_channel_id
+            )
+            
+            from src.infrastructure.slack_client import SlackNotifier
+            from src.application.notification_service import NotificationService
+            channel_id = body.get("channel_id")
+            notifier = SlackNotifier(client)
+            notif_svc = NotificationService(notifier)
+            await notif_svc.send_daily_summary(channel_id, summary)
+
     @app.command("/progreso")
     async def handle_progreso_command(ack, say):
         await ack()
