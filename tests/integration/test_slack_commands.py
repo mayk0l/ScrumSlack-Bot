@@ -12,7 +12,11 @@ def test_register_commands():
     """Prueba que los comandos se registran correctamente en la app."""
     app = AsyncApp(token="xoxb-mock", signing_secret="mock-secret")
     
-    # Mock services
+    from src.container import init_container
+    from src.config import settings
+    init_container(settings, MagicMock())
+
+    # Mock services (kept for signature backwards compatibility)
     services = {
         "session_maker": MagicMock(),
         "github_client": MagicMock(),

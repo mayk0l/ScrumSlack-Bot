@@ -1,7 +1,11 @@
-"""Módulo: jobs.
+import os
+
+file_path = "src/infrastructure/jobs.py"
+
+content = """\"\"\"Módulo: jobs.
 
 Tareas en segundo plano (cron/scheduler).
-"""
+\"\"\"
 
 from __future__ import annotations
 
@@ -60,3 +64,9 @@ async def detect_risks() -> None:
         teams = await uow.team_repo.get_all()
         for team in teams:
             await uow.risk_svc.detect_risks(team.id)
+"""
+
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("jobs.py refactored.")

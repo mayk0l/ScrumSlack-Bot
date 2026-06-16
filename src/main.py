@@ -28,8 +28,10 @@ from src.infrastructure.slack_client import create_slack_app, create_slack_handl
 from src.interfaces.api.routes import router as api_router
 from src.interfaces.slack.bolt_app import register_handlers
 
-maker = __import__("src.infrastructure.database", fromlist=["get_async_session_maker"]).get_async_session_maker()
+from src.container import init_container
+
 global_github_client = GitHubClient(settings.github_token)
+init_container(settings, global_github_client)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,8 +42,10 @@ async def lifespan(app: FastAPI):
     maker = get_async_session_maker()
     
     # Crear equipo por defecto para evitar errores de Foreign Key
-    async with maker() as session:
-        from src.infrastructure.orm_models import TeamORM
+    from src.container import get_container
+    container = get_container()
+    async with container.session() as session:
+        from src.infrastructure.orm.team import TeamORM
         from sqlalchemy import select
         from uuid import UUID
         
@@ -74,7 +78,7 @@ async def lifespan(app: FastAPI):
     if settings.standup_time:
         hour, minute = map(int, settings.standup_time.split(":"))
         scheduler.add_daily_job(
-            functools.partial(send_standup_reminder, maker),
+            send_standup_reminder,
             hour=hour,
             minute=minute,
             timezone=settings.timezone,
@@ -84,7 +88,7 @@ async def lifespan(app: FastAPI):
     if settings.summary_time:
         hour, minute = map(int, settings.summary_time.split(":"))
         scheduler.add_daily_job(
-            functools.partial(send_daily_summary, maker, github_client),
+            send_daily_summary,
             hour=hour,
             minute=minute,
             timezone=settings.timezone,
@@ -118,8 +122,6 @@ slack_app = create_slack_app(
 slack_handler = create_slack_handler(slack_app)
 
 services = {
-    "session_maker": maker,
-    "github_client": global_github_client,
     "default_team_id": UUID("00000000-0000-0000-0000-000000000000"),
     "default_channel_id": settings.standup_channel_id,
 }

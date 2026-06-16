@@ -22,45 +22,13 @@ from src.infrastructure.repositories.sprint_repo import SprintRepositoryImpl
 from src.infrastructure.repositories.metric_repo import MetricRepositoryImpl
 from src.application.valuelist_excel_service import ValuelistExcelService
 from src.config import settings
+from src.container import get_container
 
 
 def register_commands(app: AsyncApp, services: dict) -> None:
     """Registra todos los slash commands."""
-    maker = services["session_maker"]
-    github_client = services["github_client"]
     default_team_id = services.get("default_team_id")
     default_channel_id = services.get("default_channel_id")
-
-    async def _get_services():
-        session = maker()
-        standup_repo = StandupSessionRepositoryImpl(session)
-        response_repo = StandupResponseRepositoryImpl(session)
-        member_repo = MemberRepositoryImpl(session)
-        risk_repo = RiskRepositoryImpl(session)
-        pr_repo = PullRequestRepositoryImpl(session)
-        sprint_repo = SprintRepositoryImpl(session)
-        metric_repo = MetricRepositoryImpl(session)
-        
-        standup_svc = StandupService(
-            session_repo=standup_repo,
-            response_repo=response_repo,
-            member_repo=member_repo,
-        )
-        github_svc = GitHubService(github_client, pr_repo)
-        risk_svc = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
-        sprint_svc = SprintService(sprint_repo, metric_repo)
-        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
-        report_svc = ReportService(standup_svc, github_svc, risk_svc, ai_client=None, valuelist_service=valuelist_svc)
-        
-        return {
-            "standup": standup_svc, 
-            "risk": risk_svc, 
-            "report": report_svc, 
-            "sprint": sprint_svc, 
-            "member": member_repo,
-            "valuelist": valuelist_svc,
-            "github": github_svc
-        }, session
 
     @app.command("/ayuda-scrum")
     async def handle_ayuda_scrum_command(ack, say):
@@ -100,9 +68,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/riesgos")
     async def handle_riesgos_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
-            risks = await svcs["risk"].get_active_risks(default_team_id)
+        container = get_container()
+        async with container.uow() as uow:
+            risks = await uow.risk_svc.get_active_risks(default_team_id)
             if risks:
                 lines = [f"• [{r.severity.value}] {r.description}" for r in risks]
                 text = "⚠️ Riesgos activos:\n" + "\n".join(lines)
@@ -113,12 +81,12 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/bloqueos")
     async def handle_bloqueos_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
-            responses = await svcs["standup"].get_today_responses(
+        container = get_container()
+        async with container.uow() as uow:
+            responses = await uow.standup_svc.get_today_responses(
                 default_team_id, default_channel_id
             )
-            members = await svcs["member"].get_by_team(default_team_id)
+            members = await uow.member_repo.get_by_team(default_team_id)
             member_map = {m.id: m.slack_user_id for m in members}
             
             blockers = [r for r in responses if r.blockers and r.blockers.strip()]
@@ -132,9 +100,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/sprint")
     async def handle_sprint_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
-            sprint = await svcs["sprint"].get_active_sprint(default_team_id)
+        container = get_container()
+        async with container.uow() as uow:
+            sprint = await uow.sprint_svc.get_active_sprint(default_team_id)
             if sprint:
                 text = (
                     f"🏃 *Sprint activo: {sprint.name}*\n"
@@ -150,13 +118,13 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/metricas")
     async def handle_metricas_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
-            sprint = await svcs["sprint"].get_active_sprint(default_team_id)
+        container = get_container()
+        async with container.uow() as uow:
+            sprint = await uow.sprint_svc.get_active_sprint(default_team_id)
             if not sprint:
                 await say("No hay sprint activo. Usa `/sprint` para verificar.")
                 return
-            metrics = await svcs["sprint"].get_sprint_metrics(default_team_id, sprint.id)
+            metrics = await uow.sprint_svc.get_sprint_metrics(default_team_id, sprint.id)
             metric_list = metrics.get("metrics", [])
             if metric_list:
                 lines = [f"• {m['type']}: {m['value']} ({m['date']})" for m in metric_list]
@@ -168,9 +136,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/reporte")
     async def handle_reporte_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
-            summary = await svcs["report"].generate_daily_summary(
+        container = get_container()
+        async with container.uow() as uow:
+            summary = await uow.report_svc.generate_daily_summary(
                 default_team_id, default_channel_id
             )
         await say(f"{summary}\n\n")
@@ -182,9 +150,9 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             await say("❌ GitHub sync no configurado (falta GITHUB_DEFAULT_ORG).")
             return
         await say("⚙️ *Sincronizando Pull Requests desde GitHub...*")
-        svcs, session = await _get_services()
-        async with session:
-            await svcs["github"].sync_pull_requests(
+        container = get_container()
+        async with container.uow() as uow:
+            await uow.github_svc.sync_pull_requests(
                 default_team_id,
                 settings.github_default_org,
                 [settings.github_default_org],
@@ -206,10 +174,10 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_test_resumen_command(ack, body, client, say):
         await ack()
         await say("⚙️ *Simulando envío automático del resumen diario...*")
-        svcs, session = await _get_services()
-        async with session:
+        container = get_container()
+        async with container.uow() as uow:
             # Reusa la misma lógica del reporte, pero enviada como el servicio de notificaciones
-            summary = await svcs["report"].generate_daily_summary(
+            summary = await uow.report_svc.generate_daily_summary(
                 default_team_id, default_channel_id
             )
             
@@ -223,8 +191,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/progreso")
     async def handle_progreso_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        async with session:
+        container = get_container()
+        async with container.uow() as uow:
             try:
                 modules = await svcs["excel"].get_module_progress()
                 if modules:
@@ -248,7 +216,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         user_info = await client.users_info(user=user_id)
         real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
         
-        tasks = await svcs["valuelist"].get_my_tasks(real_name)
+        tasks = await uow.valuelist_svc.get_my_tasks(real_name)
         if tasks:
             lines = [f"• *[{t['id']}]* {t['desc']} — {t['progress'] * 100:.0f}%" for t in tasks]
             text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)
@@ -260,7 +228,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_bitacora_command(ack, say):
         await ack()
         svcs, session = await _get_services()
-        summary = await svcs["valuelist"].get_bitacora_summary()
+        summary = await uow.valuelist_svc.get_bitacora_summary()
         
         if summary["og"]:
             text = f"🎯 *Objetivo General:*\n{summary['og']}\n\n"
@@ -290,7 +258,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             return
             
         svcs, session = await _get_services()
-        success = await svcs["valuelist"].update_task_progress(task_id, progress)
+        success = await uow.valuelist_svc.update_task_progress(task_id, progress)
         
         if success:
             await say(f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, no olvides usar `/evidencia {task_id} [URL]`")
@@ -311,7 +279,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         url = parts[1]
         
         svcs, session = await _get_services()
-        success = await svcs["valuelist"].add_evidence(task_id, url)
+        success = await uow.valuelist_svc.add_evidence(task_id, url)
         
         if success:
             await say(f"🔗 Evidencia guardada para *{task_id}* en la Hoja 5.")
@@ -331,7 +299,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_gantt_command(ack, say):
         await ack()
         svcs, session = await _get_services()
-        gantt_text = await svcs["valuelist"].generate_gantt()
+        gantt_text = await uow.valuelist_svc.generate_gantt()
         await say(f"📊 *Diagrama de Gantt (Planificación)*\n\n{gantt_text}")
 
     @app.command("/descargar-excel")
@@ -352,7 +320,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_editar_command(ack, body, client):
         await ack()
         svcs, _ = await _get_services()
-        options = await svcs["valuelist"].get_all_edit_options()
+        options = await uow.valuelist_svc.get_all_edit_options()
         
         from src.interfaces.slack.modals import build_editar_selector_modal
         await client.views_open(
@@ -364,7 +332,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_todas_las_tareas_command(ack, say):
         await ack()
         svcs, session = await _get_services()
-        grouped_tasks = await svcs["valuelist"].get_all_active_tasks()
+        grouped_tasks = await uow.valuelist_svc.get_all_active_tasks()
         
         if not grouped_tasks:
             await say("🎉 ¡No hay tareas activas en el Excel!")

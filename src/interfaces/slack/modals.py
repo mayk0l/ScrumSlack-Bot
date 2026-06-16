@@ -212,15 +212,7 @@ from src.infrastructure.repositories.member_repo import MemberRepositoryImpl
 
 def register_modals(app: AsyncApp, services: dict) -> None:
     """Registra el handler de envío del modal de standup."""
-    maker = services["session_maker"]
 
-    async def _get_standup_service():
-        session = maker()
-        return StandupService(
-            session_repo=StandupSessionRepositoryImpl(session),
-            response_repo=StandupResponseRepositoryImpl(session),
-            member_repo=MemberRepositoryImpl(session),
-        ), session
 
     @app.view("standup_submission")
     async def handle_standup_submission(ack, body, view):
@@ -237,9 +229,10 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             team_id = UUID(team_id)
         channel_id = services.get("default_channel_id", "C000")
 
-        svc, session = await _get_standup_service()
-        async with session:
-            await svc.submit_response(
+        from src.container import get_container
+        container = get_container()
+        async with container.uow() as uow:
+            await uow.standup_svc.submit_response(
                 team_id=team_id,
                 slack_user_id=user_id,
                 yesterday=yesterday,
@@ -262,9 +255,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         start = values["start_block"]["start_input"]["value"]
         end = values["end_block"]["end_input"]["value"]
 
-        from src.application.valuelist_excel_service import ValuelistExcelService
-        from src.config import settings
-        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+        from src.container import get_container
+        valuelist_svc = get_container().valuelist_svc
         
         success = await valuelist_svc.create_task(act_id, desc, resp, start, end)
         
@@ -285,9 +277,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         tipo, item_id = seleccion.split("|")
         
         if tipo == "tarea":
-            from src.application.valuelist_excel_service import ValuelistExcelService
-            from src.config import settings
-            valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+            from src.container import get_container
+            valuelist_svc = get_container().valuelist_svc
             task = await valuelist_svc.get_task_by_id(item_id)
             
             if task:
@@ -301,9 +292,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                     errors={"seleccion_block": "No se encontró la tarea seleccionada."}
                 )
         elif tipo == "bitacora":
-            from src.application.valuelist_excel_service import ValuelistExcelService
-            from src.config import settings
-            valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+            from src.container import get_container
+            valuelist_svc = get_container().valuelist_svc
             bitacora = await valuelist_svc.get_bitacora_summary()
             
             item_id_upper = item_id.upper()
@@ -341,9 +331,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         delete_opts = values["delete_block"]["delete_input"].get("selected_options", [])
         should_delete = len(delete_opts) > 0 and delete_opts[0]["value"] == "delete"
         
-        from src.application.valuelist_excel_service import ValuelistExcelService
-        from src.config import settings
-        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+        from src.container import get_container
+        valuelist_svc = get_container().valuelist_svc
         
         if should_delete:
             await valuelist_svc.delete_task_by_id(task_id)
@@ -364,7 +353,6 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         values = view["state"]["values"]
         new_desc = values["desc_block"]["desc_input"]["value"]
         
-        from src.application.valuelist_excel_service import ValuelistExcelService
-        from src.config import settings
-        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
+        from src.container import get_container
+        valuelist_svc = get_container().valuelist_svc
         await valuelist_svc.update_bitacora(obj_id, new_desc)
