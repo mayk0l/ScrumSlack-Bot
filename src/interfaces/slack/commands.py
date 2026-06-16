@@ -72,6 +72,32 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             "valuelist": valuelist_svc
         }, session
 
+    @app.command("/ayuda-scrum")
+    async def handle_ayuda_scrum_command(ack, say):
+        await ack()
+        ayuda_text = (
+            "🚀 *Guía Rápida de ScrumSlack Bot*\n\n"
+            "Aquí tienes el flujo de trabajo para dominar el proyecto sin tocar el Excel:\n\n"
+            "🎯 *1. Planificación (Bitácora)*\n"
+            "• `/editar` -> Define y modifica los objetivos (`OG`, `OE1`, etc.) o ajusta detalles de tus tareas.\n"
+            "• `/bitacora` -> Revisa las metas del proyecto.\n\n"
+            "📝 *2. Tareas*\n"
+            "• `/crear-tarea` -> Crea una nueva tarea asignándole un ID (ej. A1.1).\n"
+            "• `/todas-las-tareas` -> Mira el backlog completo.\n"
+            "• `/mis-tareas` -> Descubre qué tareas te tocan a ti.\n\n"
+            "🏃‍♂️ *3. El Día a Día*\n"
+            "• `/scrum` -> Reporta tu avance diario (Daily Standup).\n"
+            "• `/avance [ID] [1-100]` -> Actualiza el progreso de una tarea (Ej. `/avance A1.1 50`).\n"
+            "• `/evidencia [ID] [URL]` -> Sube el link de tu PR o documento al llegar al 100%.\n\n"
+            "📊 *4. Reportes y Cierre*\n"
+            "• `/progreso` -> Revisa el porcentaje de avance global de cada módulo.\n"
+            "• `/reporte` -> Resumen automático del trabajo del equipo.\n"
+            "• `/gantt` -> Visualiza el cronograma general.\n"
+            "• `/descargar-excel` -> Baja la versión maestra y más reciente del Excel.\n\n"
+            "¡A darle con todo! 🦣🛠️\n\n"
+        )
+        await say(ayuda_text)
+
     @app.command("/scrum")
     async def handle_scrum_command(ack, body, client):
         await ack()
