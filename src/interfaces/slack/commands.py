@@ -294,3 +294,24 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             trigger_id=body["trigger_id"],
             view=build_editar_selector_modal(),
         )
+
+    @app.command("/todas-las-tareas")
+    async def handle_todas_las_tareas_command(ack, say):
+        await ack()
+        svcs, session = await _get_services()
+        grouped_tasks = await svcs["valuelist"].get_all_active_tasks()
+        
+        if not grouped_tasks:
+            await say("🎉 ¡No hay tareas activas en el Excel!")
+            return
+            
+        blocks = [{"type": "header", "text": {"type": "plain_text", "text": "🌐 Visión Global de Tareas Activas"}}]
+        
+        for resp, tasks in grouped_tasks.items():
+            task_list = "\n".join(tasks)
+            blocks.append({
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*{resp}*\n{task_list}"}
+            })
+            
+        await say(blocks=blocks)

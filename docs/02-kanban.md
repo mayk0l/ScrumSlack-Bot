@@ -514,7 +514,7 @@
 - **Dependencias:** `5.1`
 - **Descripción:** Comando `/todas-las-tareas` para listar todas las tareas abiertas agrupadas por responsable.
 - **Criterio de aceptación:** Muestra lista completa de tareas activas de la Hoja 3 y Hoja 4.
-- **Estado:** 🚧 In Progress
+- **Estado:** ✅ Done
 
 ---
 

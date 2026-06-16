@@ -213,3 +213,30 @@ async def test_update_bitacora(mock_load_workbook, service):
     success = await service.update_bitacora("og", "New OG")
     assert success is True
     mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_get_all_active_tasks(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    
+    # Simula getitem para devolver la misma hoja
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    # ID, Desc, Resp, Start, End, % esp, % log
+    mock_ws.iter_rows.return_value = [
+        ["A1.1", "Hacer backend", "Emiliano J.", None, None, None, "50%"],
+        ["A1.2", "Hacer frontend", "Diego C.", None, None, None, "10%"],
+        ["A1.3", "Hacer base de datos", "Emiliano J.", None, None, None, "100%"] # Ignorado por completado
+    ]
+    
+    grouped = await service.get_all_active_tasks()
+    
+    # Nota: como lee 2 hojas (Planificación y Administración) con el mismo mock_ws, devolverá dobles
+    assert "Emiliano J." in grouped
+    assert "Diego C." in grouped
+    
+    emiliano_tasks = grouped["Emiliano J."]
+    assert any("A1.1" in t for t in emiliano_tasks)
+    assert not any("A1.3" in t for t in emiliano_tasks)

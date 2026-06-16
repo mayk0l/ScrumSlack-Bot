@@ -301,3 +301,34 @@ class ValuelistExcelService:
                 return False
 
         return await asyncio.to_thread(_write)
+
+    async def get_all_active_tasks(self) -> dict[str, list[str]]:
+        """Devuelve todas las tareas no completadas agrupadas por responsable."""
+        def _read() -> dict[str, list[str]]:
+            from collections import defaultdict
+            grouped = defaultdict(list)
+            try:
+                wb = openpyxl.load_workbook(self._excel_path, data_only=True)
+                
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        act_id = row[0]
+                        if not act_id: continue
+                        
+                        resp = str(row[2]).strip() if row[2] else "Sin asignar"
+                        prog_str = str(row[6]).replace("%", "").strip() if row[6] else "0"
+                        
+                        try:
+                            prog = float(prog_str)
+                        except ValueError:
+                            prog = 0.0
+                            
+                        if prog < 100:
+                            grouped[resp].append(f"• *{act_id}*: {row[1]} (Progreso: {row[6] or '0%'})")
+                            
+                return dict(grouped)
+            except Exception:
+                return {}
+
+        return await asyncio.to_thread(_read)
