@@ -48,27 +48,18 @@ class ValuelistExcelService:
                 ws = wb["Bitácora"]
                 
                 summary = {"og": "", "oe": []}
-                reading_oe = False
                 
-                for row in ws.iter_rows(min_row=1, max_row=50, values_only=True):
+                for row in ws.iter_rows(min_row=2, max_row=8, values_only=True):
                     col_b = row[1]
                     col_c = row[2]
                     
-                    if col_b == "OG" and col_c:
-                        summary["og"] = str(col_c)
-                    
-                    if col_b == "Objetivo" and col_c == "Descripción":
-                        reading_oe = True
-                        continue
-                        
-                    if reading_oe:
-                        if not col_b and not col_c:
-                            reading_oe = False
-                        elif col_b and str(col_b).startswith("OE"):
-                            summary["oe"].append({
-                                "id": str(col_b),
-                                "desc": str(col_c) if col_c else ""
-                            })
+                    if col_b == "OG":
+                        summary["og"] = str(col_c) if col_c else ""
+                    elif col_b and str(col_b).startswith("OE"):
+                        summary["oe"].append({
+                            "id": str(col_b),
+                            "desc": str(col_c) if col_c else ""
+                        })
                             
                 return summary
             except Exception:

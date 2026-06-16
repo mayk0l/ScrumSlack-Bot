@@ -35,14 +35,26 @@ if "Gantt" in wb.sheetnames:
 # 5. Clean Bitácora completely
 ws = wb["Bitácora"]
 
-# Clear descriptions in rows 2-8
-for r in range(2, 9):
-    ws.cell(row=r, column=3, value="")
+# Clear OG
+for row in ws.iter_rows(min_row=1, max_row=10):
+    if row[1].value == "OG":
+        row[2].value = "" # Clear Description
 
-# Delete everything below row 8 (to wipe out the extra text the user saw)
-max_r = ws.max_row
-if max_r >= 9:
-    ws.delete_rows(9, max_r)
+# Clear all OE descriptions (look for "Objetivo" and "Descripción" header)
+reading_oe = False
+for row in ws.iter_rows(min_row=1, max_row=50):
+    col_b = row[1].value
+    col_c = row[2].value
+    
+    if col_b == "Objetivo" and col_c == "Descripción":
+        reading_oe = True
+        continue
+        
+    if reading_oe:
+        if not col_b and not col_c:
+            reading_oe = False
+        elif col_b and str(col_b).startswith("OE"):
+            row[2].value = "" # Clear Description
 
 wb.save("project_tracking.xlsx")
-print("Cleaned project_tracking.xlsx completely, including Bitácora bottom rows.")
+print("Fixed project_tracking.xlsx completely.")
