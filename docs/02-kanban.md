@@ -487,6 +487,37 @@
 
 ---
 
+### Fase 6 — Dominio Total (VI)
+
+#### 6.1 — Panel de Edición Universal y Borrado
+- **ID:** `6.1`
+- **Prioridad:** P0
+- **Esfuerzo:** M
+- **Dependencias:** `5.3`
+- **Descripción:** Comando `/editar` que abre modal de 2 pasos (selección de tipo/ID -> formulario pre-llenado). Opción para eliminar fila.
+- **Criterio de aceptación:** Se puede modificar texto/fechas de tareas y bitácora, y se guardan correctamente en el Excel sin romperlo.
+- **Estado:** 🔲 Pendiente
+
+#### 6.2 — Soporte para Hoja 4 (Administración)
+- **ID:** `6.2`
+- **Prioridad:** P1
+- **Esfuerzo:** S
+- **Dependencias:** `6.1`
+- **Descripción:** El bot debe poder leer, crear y avanzar tareas administrativas (AD).
+- **Criterio de aceptación:** Comandos como `/avance-admin` o integración de la Hoja 4 en el ecosistema.
+- **Estado:** 🔲 Pendiente
+
+#### 6.3 — Visión Global de Tareas
+- **ID:** `6.3`
+- **Prioridad:** P2
+- **Esfuerzo:** S
+- **Dependencias:** `5.1`
+- **Descripción:** Comando `/todas-las-tareas` para listar todas las tareas abiertas agrupadas por responsable.
+- **Criterio de aceptación:** Muestra lista completa de tareas activas de la Hoja 3 y Hoja 4.
+- **Estado:** 🔲 Pendiente
+
+---
+
 ## 🚧 In Progress
 
 _Espacio reservado para mover tareas activas desde Backlog._
