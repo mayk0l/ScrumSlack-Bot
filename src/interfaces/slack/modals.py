@@ -315,12 +315,21 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             from src.config import settings
             valuelist_svc = ValuelistExcelService(settings.excel_file_path)
             bitacora = await valuelist_svc.get_bitacora_summary()
-            current_desc = bitacora.get(item_id.lower())
+            
+            item_id_upper = item_id.upper()
+            current_desc = None
+            if item_id_upper == "OG":
+                current_desc = bitacora.get("og", "")
+            elif item_id_upper.startswith("OE"):
+                for oe in bitacora.get("oe", []):
+                    if oe["id"] == item_id_upper:
+                        current_desc = oe["desc"]
+                        break
             
             if current_desc is not None:
                 await ack(
                     response_action="push",
-                    view=build_editar_bitacora_modal(item_id, current_desc)
+                    view=build_editar_bitacora_modal(item_id_upper, current_desc)
                 )
             else:
                 await ack(
