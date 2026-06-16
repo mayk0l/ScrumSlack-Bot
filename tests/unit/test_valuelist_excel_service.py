@@ -148,3 +148,72 @@ async def test_generate_gantt(mock_load_workbook, service):
     assert "gantt" in gantt
     assert "A1.1" in gantt
     assert "2026-06-01" in gantt
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_get_task_by_id(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    mock_row = ["A1.2", "Desc", "Emiliano J.", "2026-06-01", "2026-06-05", None, None]
+    mock_ws.iter_rows.return_value = [mock_row]
+    
+    task = await service.get_task_by_id("A1.2")
+    assert task is not None
+    assert task["id"] == "A1.2"
+    assert task["desc"] == "Desc"
+    assert task["resp"] == "Emiliano J."
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_update_task_details(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    mock_row = [
+        MagicMock(value="A1.2"), MagicMock(value="Desc"), MagicMock(value="Emiliano J."), 
+        MagicMock(value="2026-06-01"), MagicMock(value="2026-06-05"), MagicMock(), MagicMock()
+    ]
+    mock_ws.iter_rows.return_value = [mock_row]
+    
+    success = await service.update_task_details("A1.2", "Nueva Desc", "Diego C.", "2026-06-10", "2026-06-15")
+    assert success is True
+    assert mock_row[1].value == "Nueva Desc"
+    assert mock_row[2].value == "Diego C."
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_delete_task_by_id(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    mock_cell = MagicMock(value="A1.2")
+    mock_cell.row = 3
+    mock_row = [mock_cell]
+    mock_ws.iter_rows.return_value = [mock_row]
+    
+    success = await service.delete_task_by_id("A1.2")
+    assert success is True
+    mock_ws.delete_rows.assert_called_once_with(3)
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
+
+@patch("src.application.valuelist_excel_service.openpyxl.load_workbook")
+@pytest.mark.asyncio
+async def test_update_bitacora(mock_load_workbook, service):
+    mock_wb = MagicMock()
+    mock_load_workbook.return_value = mock_wb
+    mock_ws = MagicMock()
+    mock_wb.__getitem__.return_value = mock_ws
+    
+    mock_ws.cell.return_value.value = "Old OG"
+    
+    success = await service.update_bitacora("og", "New OG")
+    assert success is True
+    mock_wb.save.assert_called_once_with("dummy.xlsx")

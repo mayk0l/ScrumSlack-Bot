@@ -496,7 +496,7 @@
 - **Dependencias:** `5.3`
 - **Descripción:** Comando `/editar` que abre modal de 2 pasos (selección de tipo/ID -> formulario pre-llenado). Opción para eliminar fila.
 - **Criterio de aceptación:** Se puede modificar texto/fechas de tareas y bitácora, y se guardan correctamente en el Excel sin romperlo.
-- **Estado:** 🔲 Pendiente
+- **Estado:** ✅ Done
 
 #### 6.2 — Soporte para Hoja 4 (Administración)
 - **ID:** `6.2`
@@ -505,7 +505,7 @@
 - **Dependencias:** `6.1`
 - **Descripción:** El bot debe poder leer, crear y avanzar tareas administrativas (AD).
 - **Criterio de aceptación:** Comandos como `/avance-admin` o integración de la Hoja 4 en el ecosistema.
-- **Estado:** 🔲 Pendiente
+- **Estado:** 🚧 In Progress
 
 #### 6.3 — Visión Global de Tareas
 - **ID:** `6.3`

@@ -186,3 +186,103 @@ class ValuelistExcelService:
                 return f"Error generando Gantt: {e}"
 
         return await asyncio.to_thread(_read)
+
+    async def get_task_by_id(self, task_id: str) -> dict[str, Any] | None:
+        """Busca una tarea en la Hoja 3 y devuelve sus detalles actuales."""
+        def _read() -> dict[str, Any] | None:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path, data_only=True)
+                ws = wb["Planificación"]
+                
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    act_id = row[0]
+                    if act_id and str(act_id) == task_id:
+                        from datetime import datetime
+                        def _format_date(d):
+                            if isinstance(d, datetime): return d.strftime("%Y-%m-%d")
+                            return str(d)[:10] if d else ""
+                            
+                        return {
+                            "id": str(act_id),
+                            "desc": str(row[1]) if row[1] else "",
+                            "resp": str(row[2]) if row[2] else "",
+                            "start": _format_date(row[3]),
+                            "end": _format_date(row[4])
+                        }
+                return None
+            except Exception:
+                return None
+
+        return await asyncio.to_thread(_read)
+
+    async def update_task_details(self, task_id: str, desc: str, resp: str, start: str, end: str) -> bool:
+        """Sobrescribe los detalles de una tarea existente en la Hoja 3."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                ws = wb["Planificación"]
+                
+                from datetime import datetime
+                try:
+                    start_dt = datetime.strptime(start, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end, "%Y-%m-%d")
+                except ValueError:
+                    start_dt = start
+                    end_dt = end
+                
+                for row in ws.iter_rows(min_row=2):
+                    cell_id = row[0]
+                    if cell_id.value and str(cell_id.value) == task_id:
+                        row[1].value = desc
+                        row[2].value = resp
+                        row[3].value = start_dt
+                        row[4].value = end_dt
+                        wb.save(self._excel_path)
+                        return True
+                return False
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)
+
+    async def delete_task_by_id(self, task_id: str) -> bool:
+        """Elimina una fila de la Hoja 3 (Planificación)."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                ws = wb["Planificación"]
+                
+                for row in ws.iter_rows(min_row=2):
+                    cell_id = row[0]
+                    if cell_id.value and str(cell_id.value) == task_id:
+                        ws.delete_rows(cell_id.row)
+                        wb.save(self._excel_path)
+                        return True
+                return False
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)
+
+    async def update_bitacora(self, obj_id: str, new_desc: str) -> bool:
+        """Actualiza el texto de un objetivo en la Hoja 1 (Bitácora)."""
+        def _write() -> bool:
+            try:
+                wb = openpyxl.load_workbook(self._excel_path)
+                ws = wb["Bitácora"]
+                
+                mapping = {
+                    "OG": 2, "OE1": 3, "OE2": 4, "OE3": 5, 
+                    "OE4": 6, "OE5": 7, "OE6": 8
+                }
+                
+                row_idx = mapping.get(obj_id.upper())
+                if row_idx:
+                    ws.cell(row=row_idx, column=2).value = new_desc
+                    wb.save(self._excel_path)
+                    return True
+                return False
+            except Exception:
+                return False
+
+        return await asyncio.to_thread(_write)

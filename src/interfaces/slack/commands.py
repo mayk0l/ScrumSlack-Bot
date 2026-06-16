@@ -285,3 +285,12 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             )
         except Exception as e:
             await say(f"❌ Error al enviar el archivo: {e}")
+
+    @app.command("/editar")
+    async def handle_editar_command(ack, body, client):
+        await ack()
+        from src.interfaces.slack.modals import build_editar_selector_modal
+        await client.views_open(
+            trigger_id=body["trigger_id"],
+            view=build_editar_selector_modal(),
+        )
