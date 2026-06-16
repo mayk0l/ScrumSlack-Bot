@@ -56,7 +56,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
     async def handle_crear_tarea_submission(ack, body, view, client):
         await ack()
         values = view["state"]["values"]
-        act_id = values["id_block"]["id_input"]["value"]
+        oe_id = values["oe_block"]["oe_input"]["selected_option"]["value"]
         desc = values["desc_block"]["desc_input"]["value"]
         resp_id = values["resp_block"]["resp_input"]["selected_user"]
         
@@ -67,13 +67,22 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             # Fallback if users:read scope is missing
             print(f"Error fetching user info: {e}")
             resp = f"<@{resp_id}>"
+            
         start = values["start_block"]["start_input"]["value"]
         end = values["end_block"]["end_input"]["value"]
+        
+        entregable = ""
+        if "entregable_block" in values and "entregable_input" in values["entregable_block"]:
+            entregable = values["entregable_block"]["entregable_input"].get("value") or ""
+            
+        comentarios = ""
+        if "comentarios_block" in values and "comentarios_input" in values["comentarios_block"]:
+            comentarios = values["comentarios_block"]["comentarios_input"].get("value") or ""
 
         from src.container import get_container
         valuelist_svc = get_container().valuelist_svc
         
-        success = await valuelist_svc.create_task(act_id, desc, resp, start, end)
+        success = await valuelist_svc.create_task(oe_id, desc, resp, start, end, entregable, comentarios)
         
         # Opcional: enviar mensaje al usuario o al canal de la creación
         # slack_client = app.client
@@ -139,12 +148,21 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 user_info = await client.users_info(user=resp_id)
                 resp = user_info["user"].get("real_name") or user_info["user"].get("name")
             except Exception as e:
-                # Fallback if users:read scope is missing
                 print(f"Error fetching user info: {e}")
                 resp = f"<@{resp_id}>"
+                
             start = values["start_block"]["start_input"]["value"]
             end = values["end_block"]["end_input"]["value"]
-            await valuelist_svc.update_task_details(task_id, desc, resp, start, end)
+            
+            entregable = ""
+            if "entregable_block" in values and "entregable_input" in values["entregable_block"]:
+                entregable = values["entregable_block"]["entregable_input"].get("value") or ""
+                
+            comentarios = ""
+            if "comentarios_block" in values and "comentarios_input" in values["comentarios_block"]:
+                comentarios = values["comentarios_block"]["comentarios_input"].get("value") or ""
+                
+            await valuelist_svc.update_task_details(task_id, desc, resp, start, end, entregable, comentarios)
 
     @app.view("bitacora_completa_submission")
     async def handle_bitacora_completa_submission(ack, body, view, client):

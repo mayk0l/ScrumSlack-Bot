@@ -115,13 +115,37 @@ class ValuelistExcelService:
 
         return await asyncio.to_thread(_write)
 
-    async def create_task(self, act_id: str, desc: str, resp: str, start: str, end: str) -> bool:
-        """Agrega una nueva fila al final de la hoja correspondiente."""
+    async def create_task(self, oe_id: str, desc: str, resp: str, start: str, end: str, entregable: str = "", comentarios: str = "") -> bool:
+        """Agrega una nueva fila al final de la hoja correspondiente, autogenerando el ID."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
-                sheet_name = "Administración" if act_id.upper().startswith("AD") else "Planificación"
+                sheet_name = "Administración" if oe_id == "AD" else "Planificación"
                 ws = wb[sheet_name]
+                
+                # Determine prefix
+                if oe_id == "AD":
+                    prefix = "AD"
+                elif oe_id == "A":
+                    prefix = "A0."
+                elif oe_id.startswith("OE"):
+                    num = oe_id.replace("OE", "").strip()
+                    prefix = f"A{num}."
+                else:
+                    prefix = "A"
+
+                # Find max suffix
+                max_suffix = 0
+                for r in ws.iter_rows(min_row=2, max_row=ws.max_row):
+                    cell_val = r[0].value
+                    if cell_val and str(cell_val).startswith(prefix):
+                        suffix_str = str(cell_val)[len(prefix):]
+                        try:
+                            max_suffix = max(max_suffix, int(suffix_str))
+                        except ValueError:
+                            pass
+                
+                act_id = f"{prefix}{max_suffix + 1}"
                 
                 # Encontrar la primera fila libre en la columna A
                 last_row = 1
@@ -145,10 +169,13 @@ class ValuelistExcelService:
                 ws.cell(row=last_row, column=5).value = end_dt
                 ws.cell(row=last_row, column=6).value = "NO COMENZADO"
                 ws.cell(row=last_row, column=7).value = 0.0
+                ws.cell(row=last_row, column=8).value = entregable
+                ws.cell(row=last_row, column=9).value = comentarios
                 
                 wb.save(self._excel_path)
                 return True
-            except Exception:
+            except Exception as e:
+                print(f"Error create_task: {e}")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -217,7 +244,9 @@ class ValuelistExcelService:
                                 "desc": str(row[1]) if row[1] else "",
                                 "resp": str(row[2]) if row[2] else "",
                                 "start": _format_date(row[3]),
-                                "end": _format_date(row[4])
+                                "end": _format_date(row[4]),
+                                "entregable": str(row[7]) if len(row) > 7 and row[7] else "",
+                                "comentarios": str(row[8]) if len(row) > 8 and row[8] else ""
                             }
                 return None
             except Exception:
@@ -225,7 +254,7 @@ class ValuelistExcelService:
 
         return await asyncio.to_thread(_read)
 
-    async def update_task_details(self, task_id: str, desc: str, resp: str, start: str, end: str) -> bool:
+    async def update_task_details(self, task_id: str, desc: str, resp: str, start: str, end: str, entregable: str = "", comentarios: str = "") -> bool:
         """Sobrescribe los detalles de una tarea existente en Hoja 3 o 4."""
         def _write() -> bool:
             try:
@@ -248,6 +277,12 @@ class ValuelistExcelService:
                             row[2].value = resp
                             row[3].value = start_dt
                             row[4].value = end_dt
+                            # Ensure row has enough cells
+                            while len(row) < 9:
+                                ws.cell(row=cell_id.row, column=len(row)+1).value = ""
+                                row = tuple(ws.iter_rows(min_row=cell_id.row, max_row=cell_id.row))[0]
+                            row[7].value = entregable
+                            row[8].value = comentarios
                             wb.save(self._excel_path)
                             return True
                 return False

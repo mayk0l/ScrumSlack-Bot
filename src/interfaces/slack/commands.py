@@ -317,15 +317,19 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         if success:
             await say(f"🔗 Evidencia guardada para *{task_id}* en la Hoja 5.")
         else:
-            await say(f"❌ No se encontró la tarea *{task_id}* para adjuntar la evidencia.")
+                await say(f"❌ No se encontró la tarea *{task_id}* para adjuntar la evidencia.")
 
     @app.command("/crear-tarea")
     async def handle_crear_tarea_command(ack, body, client):
         await ack()
-        from src.interfaces.slack.modals import build_crear_tarea_modal
+        from src.container import get_container
+        summary = await get_container().valuelist_svc.get_bitacora_summary()
+        oes = summary.get("oe", [])
+        
+        from src.interfaces.slack.template_loader import build_crear_tarea_modal
         await client.views_open(
             trigger_id=body["trigger_id"],
-            view=build_crear_tarea_modal(),
+            view=build_crear_tarea_modal(oes)
         )
 
     @app.command("/gantt")

@@ -23,8 +23,106 @@ def _replace_placeholders(obj: Any, replacements: dict[str, str]) -> Any:
 def build_standup_modal() -> dict[str, Any]:
     return load_template("standup_modal.json")
 
-def build_crear_tarea_modal() -> dict[str, Any]:
-    return load_template("crear_tarea_modal.json")
+def build_crear_tarea_modal(oes: list[dict[str, str]] = None) -> dict[str, Any]:
+    """Genera el modal de crear tarea dinámicamente con las opciones de OE."""
+    if oes is None:
+        oes = []
+        
+    oe_options = []
+    for oe in oes:
+        desc = oe['desc'][:50] + "..." if len(oe['desc']) > 50 else oe['desc']
+        oe_options.append({
+            "text": {"type": "plain_text", "text": f"{oe['id']} - {desc}"},
+            "value": oe["id"]
+        })
+        
+    oe_options.append({
+        "text": {"type": "plain_text", "text": "Administración (AD)"},
+        "value": "AD"
+    })
+    
+    if not oes:
+        oe_options.insert(0, {
+            "text": {"type": "plain_text", "text": "General (A)"},
+            "value": "A"
+        })
+
+    return {
+        "type": "modal",
+        "callback_id": "crear_tarea_submission",
+        "title": {"type": "plain_text", "text": "Crear Tarea"},
+        "submit": {"type": "plain_text", "text": "Guardar"},
+        "blocks": [
+            {
+                "type": "input",
+                "block_id": "oe_block",
+                "label": {"type": "plain_text", "text": "Objetivo Asociado"},
+                "element": {
+                    "type": "static_select",
+                    "action_id": "oe_input",
+                    "options": oe_options,
+                    "initial_option": oe_options[0]
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "desc_block",
+                "label": {"type": "plain_text", "text": "Descripción (resumen)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "desc_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "resp_block",
+                "label": {"type": "plain_text", "text": "Responsable"},
+                "element": {
+                    "type": "users_select",
+                    "action_id": "resp_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "start_block",
+                "label": {"type": "plain_text", "text": "Fecha Inicio (YYYY-MM-DD)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "start_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "end_block",
+                "label": {"type": "plain_text", "text": "Fecha Fin Esperado (YYYY-MM-DD)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "end_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "entregable_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Entregable"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "entregable_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "comentarios_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Comentarios"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "comentarios_input",
+                    "multiline": True
+                }
+            }
+        ]
+    }
 
 def build_editar_selector_modal(grouped_options: dict) -> dict[str, Any]:
     template = load_template("editar_selector_modal.json")
@@ -52,14 +150,103 @@ def build_editar_selector_modal(grouped_options: dict) -> dict[str, Any]:
     return template
 
 def build_editar_tarea_modal(task: dict) -> dict[str, Any]:
-    template = load_template("editar_tarea_modal.json")
-    replacements = {
-        "task_id": task.get("id", ""),
-        "task_desc": task.get("desc", ""),
-        "task_start": task.get("start", ""),
-        "task_end": task.get("end", "")
+    """Genera dinámicamente el modal para editar una tarea."""
+    return {
+        "type": "modal",
+        "callback_id": "editar_tarea_submission",
+        "private_metadata": task.get("id", ""),
+        "title": {
+            "type": "plain_text",
+            "text": f"Editar {task.get('id', '')}"
+        },
+        "submit": {
+            "type": "plain_text",
+            "text": "Guardar"
+        },
+        "blocks": [
+            {
+                "type": "input",
+                "block_id": "desc_block",
+                "label": {"type": "plain_text", "text": "Descripción (resumen)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "desc_input",
+                    "initial_value": task.get("desc", "")
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "resp_block",
+                "label": {"type": "plain_text", "text": "Responsable"},
+                "element": {
+                    "type": "users_select",
+                    "action_id": "resp_input"
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "start_block",
+                "label": {"type": "plain_text", "text": "Fecha Inicio (YYYY-MM-DD)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "start_input",
+                    "initial_value": task.get("start", "")
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "end_block",
+                "label": {"type": "plain_text", "text": "Fecha Fin Esperado (YYYY-MM-DD)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "end_input",
+                    "initial_value": task.get("end", "")
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "entregable_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Entregable"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "entregable_input",
+                    "initial_value": task.get("entregable", "")
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "comentarios_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Comentarios"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "comentarios_input",
+                    "multiline": True,
+                    "initial_value": task.get("comentarios", "")
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "delete_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Opciones de Peligro"},
+                "element": {
+                    "type": "checkboxes",
+                    "action_id": "delete_input",
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "🗑️ Eliminar esta tarea"
+                            },
+                            "value": "delete"
+                        }
+                    ]
+                }
+            }
+        ]
     }
-    return _replace_placeholders(template, replacements)
 
 def build_bitacora_completa_modal(bitacora: dict[str, Any]) -> dict[str, Any]:
     """Genera dinámicamente un modal con todos los objetivos."""
