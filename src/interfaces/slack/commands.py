@@ -289,10 +289,13 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/editar")
     async def handle_editar_command(ack, body, client):
         await ack()
+        svcs, _ = await _get_services()
+        options = await svcs["valuelist"].get_all_edit_options()
+        
         from src.interfaces.slack.modals import build_editar_selector_modal
         await client.views_open(
             trigger_id=body["trigger_id"],
-            view=build_editar_selector_modal(),
+            view=build_editar_selector_modal(options),
         )
 
     @app.command("/todas-las-tareas")

@@ -332,3 +332,39 @@ class ValuelistExcelService:
                 return {}
 
         return await asyncio.to_thread(_read)
+
+    async def get_all_edit_options(self) -> dict[str, list[dict[str, str]]]:
+        """Devuelve opciones agrupadas de Tareas y Bitácora para el selector de Slack."""
+        def _read() -> dict[str, list[dict[str, str]]]:
+            options = {"tareas": [], "bitacora": []}
+            try:
+                wb = openpyxl.load_workbook(self._excel_path, data_only=True)
+                
+                # Tareas
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        act_id = row[0]
+                        if act_id:
+                            desc = str(row[1])[:50] if row[1] else "Sin descripción"
+                            options["tareas"].append({
+                                "text": {"type": "plain_text", "text": f"{act_id} - {desc}"},
+                                "value": f"tarea|{act_id}"
+                            })
+                            
+                # Bitácora
+                ws_bit = wb["Bitácora"]
+                mapping = {"OG": 2, "OE1": 3, "OE2": 4, "OE3": 5, "OE4": 6, "OE5": 7, "OE6": 8}
+                for obj_id, r in mapping.items():
+                    val = ws_bit.cell(row=r, column=2).value
+                    desc = str(val)[:50] if val else "Sin descripción"
+                    options["bitacora"].append({
+                        "text": {"type": "plain_text", "text": f"{obj_id} - {desc}"},
+                        "value": f"bitacora|{obj_id}"
+                    })
+                    
+                return options
+            except Exception:
+                return options
+
+        return await asyncio.to_thread(_read)

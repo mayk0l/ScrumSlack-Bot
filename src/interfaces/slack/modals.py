@@ -99,7 +99,29 @@ def build_crear_tarea_modal() -> dict:
         ],
     }
 
-def build_editar_selector_modal() -> dict:
+def build_editar_selector_modal(grouped_options: dict) -> dict:
+    option_groups = []
+    
+    # Asegurar máximo 100 opciones por grupo
+    if grouped_options.get("tareas"):
+        option_groups.append({
+            "label": {"type": "plain_text", "text": "Tareas"},
+            "options": grouped_options["tareas"][:100]
+        })
+        
+    if grouped_options.get("bitacora"):
+        option_groups.append({
+            "label": {"type": "plain_text", "text": "Bitácora"},
+            "options": grouped_options["bitacora"][:100]
+        })
+        
+    # Fallback si está todo vacío
+    if not option_groups:
+        option_groups.append({
+            "label": {"type": "plain_text", "text": "Vacío"},
+            "options": [{"text": {"type": "plain_text", "text": "No hay elementos editables"}, "value": "none|none"}]
+        })
+
     return {
         "type": "modal",
         "callback_id": "editar_selector_submission",
@@ -108,23 +130,13 @@ def build_editar_selector_modal() -> dict:
         "blocks": [
             {
                 "type": "input",
-                "block_id": "tipo_block",
-                "label": {"type": "plain_text", "text": "¿Qué quieres editar?"},
+                "block_id": "seleccion_block",
+                "label": {"type": "plain_text", "text": "¿Qué elemento deseas editar?"},
                 "element": {
                     "type": "static_select",
-                    "action_id": "tipo_input",
-                    "options": [
-                        {"text": {"type": "plain_text", "text": "Tarea (Planificación)"}, "value": "tarea"},
-                        {"text": {"type": "plain_text", "text": "Bitácora (Objetivos)"}, "value": "bitacora"},
-                        {"text": {"type": "plain_text", "text": "Evidencia"}, "value": "evidencia"}
-                    ]
+                    "action_id": "seleccion_input",
+                    "option_groups": option_groups
                 }
-            },
-            {
-                "type": "input",
-                "block_id": "id_block",
-                "label": {"type": "plain_text", "text": "ID a editar (Ej. A2.1)"},
-                "element": {"type": "plain_text_input", "action_id": "id_input"},
             }
         ]
     }
@@ -273,8 +285,13 @@ def register_modals(app: AsyncApp, services: dict) -> None:
     @app.view("editar_selector_submission")
     async def handle_editar_selector_submission(ack, body, view):
         values = view["state"]["values"]
-        tipo = values["tipo_block"]["tipo_input"]["selected_option"]["value"]
-        item_id = values["id_block"]["id_input"]["value"].upper()
+        seleccion = values["seleccion_block"]["seleccion_input"]["selected_option"]["value"]
+        
+        if seleccion == "none|none":
+            await ack(response_action="errors", errors={"seleccion_block": "No hay nada válido para editar."})
+            return
+            
+        tipo, item_id = seleccion.split("|")
         
         if tipo == "tarea":
             from src.application.valuelist_excel_service import ValuelistExcelService
@@ -289,7 +306,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             else:
                 await ack(
                     response_action="errors",
-                    errors={"id_block": "No se encontró la tarea con ese ID."}
+                    errors={"seleccion_block": "No se encontró la tarea seleccionada."}
                 )
         elif tipo == "bitacora":
             from src.application.valuelist_excel_service import ValuelistExcelService
@@ -305,7 +322,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             else:
                 await ack(
                     response_action="errors",
-                    errors={"id_block": "ID inválido. Usa OG, OE1, OE2..."}
+                    errors={"seleccion_block": "ID inválido para Bitácora."}
                 )
         else:
             await ack(
