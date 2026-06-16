@@ -38,4 +38,13 @@ class Settings(BaseSettings):
     # Excel
     excel_file_path: str = "project_tracking.xlsx"
 
-settings = Settings()
+import sys
+from pydantic import ValidationError
+
+try:
+    settings = Settings()
+except ValidationError as e:
+    print("❌ ERROR DE CONFIGURACIÓN: Faltan variables de entorno requeridas:")
+    for error in e.errors():
+        print(f"  - {error['loc'][0]}: {error['msg']}")
+    sys.exit(1)
