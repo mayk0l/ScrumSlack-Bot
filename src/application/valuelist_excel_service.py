@@ -11,6 +11,178 @@ class ValuelistExcelService:
     def __init__(self, excel_path: str):
         self._excel_path = excel_path
 
+    @staticmethod
+    def _apply_gantt_and_styles(wb: openpyxl.Workbook):
+        from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+        from datetime import datetime, timedelta
+
+        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+        thin_border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+
+        headers = ["Actividad", "Descripción (resumen)", "Responsable", "Comienzo", "Fin (Esperado/logrado)", "% logro esperado", "% de logro", "Entregable", "Comentarios"]
+        
+        # 1. Format Planificación and Administración
+        for sheet_name in ["Planificación", "Administración"]:
+            if sheet_name not in wb.sheetnames:
+                continue
+            ws = wb[sheet_name]
+            
+            # Ensure headers
+            for col_idx, h in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_idx)
+                cell.value = h
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = align_center
+                cell.border = thin_border
+                
+            # Column widths
+            ws.column_dimensions['A'].width = 12
+            ws.column_dimensions['B'].width = 40
+            ws.column_dimensions['C'].width = 20
+            ws.column_dimensions['D'].width = 15
+            ws.column_dimensions['E'].width = 15
+            ws.column_dimensions['F'].width = 20
+            ws.column_dimensions['G'].width = 12
+            ws.column_dimensions['H'].width = 30
+            ws.column_dimensions['I'].width = 30
+
+            # Content styling
+            for row in ws.iter_rows(min_row=2, max_row=max(2, ws.max_row), max_col=9):
+                for cell in row:
+                    cell.alignment = align_left if cell.column in (2, 8, 9) else align_center
+                    cell.border = thin_border
+                    
+        # 2. Draw Gantt Chart
+        tasks = []
+        min_date = None
+        max_date = None
+        
+        for sheet_name in ["Planificación", "Administración"]:
+            if sheet_name not in wb.sheetnames:
+                continue
+            ws = wb[sheet_name]
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+                act_id = row[0].value
+                desc = row[1].value
+                start = row[3].value
+                end = row[4].value
+                if act_id and start and end:
+                    # Parse dates
+                    if isinstance(start, str):
+                        try: start = datetime.strptime(start[:10], "%Y-%m-%d")
+                        except: continue
+                    if isinstance(end, str):
+                        try: end = datetime.strptime(end[:10], "%Y-%m-%d")
+                        except: continue
+                        
+                    if isinstance(start, datetime) and isinstance(end, datetime):
+                        tasks.append({"id": act_id, "desc": desc, "start": start, "end": end})
+                        if min_date is None or start < min_date: min_date = start
+                        if max_date is None or end > max_date: max_date = end
+        
+        ws_gantt = wb["Gantt"] if "Gantt" in wb.sheetnames else wb["Carta Gantt"] if "Carta Gantt" in wb.sheetnames else None
+        if not ws_gantt: return
+        
+        # Clear Gantt sheet
+        ws_gantt.delete_rows(1, ws_gantt.max_row)
+        ws_gantt.row_dimensions.clear()
+        
+        if not tasks or not min_date or not max_date:
+            ws_gantt.cell(row=1, column=1).value = "No hay tareas con fechas válidas."
+            return
+            
+        # Build timeline (weekly)
+        current_date = min_date - timedelta(days=min_date.weekday())
+        end_timeline = max_date + timedelta(days=(6 - max_date.weekday()))
+        
+        weeks = []
+        while current_date <= end_timeline:
+            weeks.append(current_date)
+            current_date += timedelta(days=7)
+            
+        ws_gantt.cell(row=1, column=1).value = "ID"
+        ws_gantt.cell(row=1, column=2).value = "Descripción"
+        ws_gantt.cell(row=2, column=1).value = "ID"
+        ws_gantt.cell(row=2, column=2).value = "Descripción"
+        
+        ws_gantt.column_dimensions['A'].width = 12
+        ws_gantt.column_dimensions['B'].width = 30
+        
+        col_idx = 3
+        current_month = None
+        month_start_col = 3
+        
+        months_es = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        
+        for w in weeks:
+            month_str = f"{months_es[w.month - 1]} {w.year}"
+            if current_month != month_str:
+                if current_month is not None:
+                    if month_start_col < col_idx - 1:
+                        ws_gantt.merge_cells(start_row=1, start_column=month_start_col, end_row=1, end_column=col_idx-1)
+                    cell = ws_gantt.cell(row=1, column=month_start_col)
+                    cell.value = current_month
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = align_center
+                    cell.border = thin_border
+                current_month = month_str
+                month_start_col = col_idx
+                
+            c2 = ws_gantt.cell(row=2, column=col_idx)
+            c2.value = f"{w.day:02d}/{w.month:02d}"
+            c2.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+            c2.font = Font(bold=True)
+            c2.alignment = align_center
+            c2.border = thin_border
+            ws_gantt.column_dimensions[get_column_letter(col_idx)].width = 8
+            
+            col_idx += 1
+            
+        if current_month is not None:
+            if month_start_col < col_idx - 1:
+                ws_gantt.merge_cells(start_row=1, start_column=month_start_col, end_row=1, end_column=col_idx-1)
+            cell = ws_gantt.cell(row=1, column=month_start_col)
+            cell.value = current_month
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = align_center
+            cell.border = thin_border
+
+        # Draw tasks
+        gantt_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        
+        row_idx = 3
+        for t in sorted(tasks, key=lambda x: x["start"]):
+            c_id = ws_gantt.cell(row=row_idx, column=1)
+            c_id.value = t["id"]
+            c_id.alignment = align_center
+            c_id.border = thin_border
+            
+            c_desc = ws_gantt.cell(row=row_idx, column=2)
+            c_desc.value = t["desc"]
+            c_desc.alignment = align_left
+            c_desc.border = thin_border
+            
+            c_idx = 3
+            for w in weeks:
+                w_end = w + timedelta(days=6)
+                c_cell = ws_gantt.cell(row=row_idx, column=c_idx)
+                if t["start"] <= w_end and t["end"] >= w:
+                    c_cell.fill = gantt_fill
+                c_cell.border = thin_border
+                c_idx += 1
+                
+            row_idx += 1
+
     async def get_my_tasks(self, target_name: str) -> list[dict[str, Any]]:
         """Busca las tareas asignadas al usuario en la Hoja 3 (Planificación)."""
         if not target_name:
@@ -171,7 +343,7 @@ class ValuelistExcelService:
                 ws.cell(row=last_row, column=7).value = 0.0
                 ws.cell(row=last_row, column=8).value = entregable
                 ws.cell(row=last_row, column=9).value = comentarios
-                
+                self._apply_gantt_and_styles(wb)
                 wb.save(self._excel_path)
                 return True
             except Exception as e:
@@ -283,6 +455,7 @@ class ValuelistExcelService:
                                 row = tuple(ws.iter_rows(min_row=cell_id.row, max_row=cell_id.row))[0]
                             row[7].value = entregable
                             row[8].value = comentarios
+                            self._apply_gantt_and_styles(wb)
                             wb.save(self._excel_path)
                             return True
                 return False
@@ -303,6 +476,7 @@ class ValuelistExcelService:
                         cell_id = row[0]
                         if cell_id.value and str(cell_id.value) == task_id:
                             ws.delete_rows(cell_id.row)
+                            self._apply_gantt_and_styles(wb)
                             wb.save(self._excel_path)
                             return True
                 return False
