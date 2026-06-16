@@ -290,6 +290,7 @@ class ValuelistExcelService:
                 # 1. Update existing
                 last_oe_row = 1
                 last_oe_num = 0
+                rows_to_delete = []
                 
                 for row_idx in range(2, ws.max_row + 10): # Look slightly beyond max_row
                     col_b_val = ws.cell(row=row_idx, column=2).value
@@ -299,15 +300,31 @@ class ValuelistExcelService:
                     obj_id = str(col_b_val).strip().upper()
                     
                     if obj_id in updates:
-                        ws.cell(row=row_idx, column=3).value = updates[obj_id]
-                        
-                    if obj_id.startswith("OE"):
+                        new_val = str(updates[obj_id]).strip()
+                        # If OE and empty, mark for deletion
+                        if not new_val and obj_id.startswith("OE"):
+                            rows_to_delete.append(row_idx)
+                        else:
+                            ws.cell(row=row_idx, column=3).value = new_val
+                            if obj_id.startswith("OE"):
+                                last_oe_row = max(last_oe_row, row_idx)
+                                try:
+                                    num = int(obj_id.replace("OE", "").strip())
+                                    last_oe_num = max(last_oe_num, num)
+                                except ValueError:
+                                    pass
+                    elif obj_id.startswith("OE"):
                         last_oe_row = max(last_oe_row, row_idx)
                         try:
                             num = int(obj_id.replace("OE", "").strip())
                             last_oe_num = max(last_oe_num, num)
                         except ValueError:
                             pass
+                
+                for r in sorted(rows_to_delete, reverse=True):
+                    ws.delete_rows(r)
+                    if r <= last_oe_row:
+                        last_oe_row -= 1
                 
                 # 2. Insert new OE if provided
                 if new_oe.strip():

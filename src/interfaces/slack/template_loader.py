@@ -83,7 +83,8 @@ def build_bitacora_completa_modal(bitacora: dict[str, Any]) -> dict[str, Any]:
         blocks.append({
             "type": "input",
             "block_id": f"oe_{oe['id']}_block",
-            "label": {"type": "plain_text", "text": oe["id"]},
+            "optional": True,
+            "label": {"type": "plain_text", "text": oe["id"] + " (Borra el texto para eliminar)"},
             "element": {
                 "type": "plain_text_input",
                 "action_id": f"{oe['id']}_input",
