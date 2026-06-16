@@ -54,10 +54,38 @@ class ValuelistExcelService:
             ws.column_dimensions['H'].width = 30
             ws.column_dimensions['I'].width = 30
 
-            # Content styling
             for row in ws.iter_rows(min_row=2, max_row=max(2, ws.max_row), max_col=9):
                 for cell in row:
                     cell.alignment = align_left if cell.column in (2, 8, 9) else align_center
+                    cell.border = thin_border
+                    
+        # 1.5. Format Evidencia
+        if "Evidencia" in wb.sheetnames:
+            ws_ev = wb["Evidencia"]
+            ev_headers = ["Actividad", "Descripción", "Enlace / Ubicación"]
+            for col_idx, h in enumerate(ev_headers, 1):
+                cell = ws_ev.cell(row=1, column=col_idx)
+                cell.value = h
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = align_center
+                cell.border = thin_border
+            
+            ws_ev.column_dimensions['A'].width = 12
+            ws_ev.column_dimensions['B'].width = 40
+            ws_ev.column_dimensions['C'].width = 60
+            
+            # Clean floating ghost rows
+            last_valid_row = 1
+            for row in ws_ev.iter_rows(min_row=2, max_col=3):
+                if any(c.value for c in row):
+                    last_valid_row = row[0].row
+            if last_valid_row < ws_ev.max_row:
+                ws_ev.delete_rows(last_valid_row + 1, ws_ev.max_row - last_valid_row)
+            
+            for row in ws_ev.iter_rows(min_row=2, max_row=max(2, ws_ev.max_row), max_col=3):
+                for cell in row:
+                    cell.alignment = align_left if cell.column in (2, 3) else align_center
                     cell.border = thin_border
                     
         # 2. Draw Gantt Chart
@@ -279,7 +307,18 @@ class ValuelistExcelService:
                     return False
                     
                 ws_evi = wb["Evidencia"]
-                ws_evi.append([task_id, desc, url])
+                
+                # Append manually to the first truly empty row to avoid ghost rows
+                last_row = 1
+                for i in range(2, ws_evi.max_row + 2):
+                    if not ws_evi.cell(row=i, column=1).value and not ws_evi.cell(row=i, column=2).value:
+                        last_row = i
+                        break
+                ws_evi.cell(row=last_row, column=1).value = task_id
+                ws_evi.cell(row=last_row, column=2).value = desc
+                ws_evi.cell(row=last_row, column=3).value = url
+                
+                self._apply_gantt_and_styles(wb)
                 wb.save(self._excel_path)
                 return True
             except Exception:
