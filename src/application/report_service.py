@@ -80,8 +80,10 @@ class ReportService:
         if missing:
             for member in missing:
                 lines.append(f"- {member.display_name}")
-        else:
+        elif len(responses) > 0:
             lines.append("Todos respondieron.")
+        else:
+            lines.append("Nadie ha respondido aún.")
 
         return "\n".join(lines)
 
