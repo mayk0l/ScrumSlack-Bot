@@ -334,6 +334,7 @@ class ValuelistExcelService:
                     
                 # 4. Clear existing rows and rewrite everything sequentially
                 ws.delete_rows(2, ws.max_row)
+                ws.row_dimensions.clear()
                 
                 ws.append(["", "PROYECTO", current_data["PROYECTO"]])
                 ws.append(["", "OG", current_data["OG"]])
