@@ -30,6 +30,22 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     default_team_id = services.get("default_team_id")
     default_channel_id = services.get("default_channel_id")
 
+    @app.command("/set-canal-reportes")
+    async def handle_set_canal_command(ack, body, say):
+        await ack()
+        channel_id = body.get("channel_id")
+        channel_name = body.get("channel_name")
+        
+        container = get_container()
+        async with container.uow() as uow:
+            team = await uow.team_repo.get_by_id(default_team_id)
+            if team:
+                team.standup_channel_id = channel_id
+                await uow.team_repo.save(team)
+                await say(f"✅ ¡Canal configurado con éxito! El bot ahora enviará los reportes automáticos en este canal (`{channel_name}`).")
+            else:
+                await say("❌ Error: No se encontró el equipo por defecto.")
+
     @app.command("/ayuda-scrum")
     async def handle_ayuda_scrum_command(ack, say):
         await ack()
