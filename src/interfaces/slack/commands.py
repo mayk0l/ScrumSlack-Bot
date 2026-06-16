@@ -91,7 +91,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 text = "⚠️ Riesgos activos:\n" + "\n".join(lines)
             else:
                 text = "No hay riesgos activos. 🎉"
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/bloqueos")
     async def handle_bloqueos_command(ack, say):
@@ -110,7 +110,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 text = "🚫 *Bloqueos reportados hoy:*\n" + "\n".join(lines)
             else:
                 text = "No hay bloqueos reportados hoy. ✅"
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/sprint")
     async def handle_sprint_command(ack, say):
@@ -128,7 +128,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 )
             else:
                 text = "No hay sprint activo actualmente."
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/metricas")
     async def handle_metricas_command(ack, say):
@@ -146,7 +146,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 text = f"📊 *Métricas del sprint {sprint.name}:*\n" + "\n".join(lines)
             else:
                 text = f"📊 Sprint *{sprint.name}* activo pero sin métricas registradas aún."
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/reporte")
     async def handle_reporte_command(ack, say):
@@ -156,7 +156,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             summary = await svcs["report"].generate_daily_summary(
                 default_team_id, default_channel_id
             )
-        await say(summary)
+        await say(f"{summary}\n\n")
 
     @app.command("/progreso")
     async def handle_progreso_command(ack, say):
@@ -175,7 +175,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                     text = "No hay módulos registrados en la planilla."
             except FileNotFoundError:
                 text = "⚠️ Planilla Excel no encontrada. Ejecuta la creación del template primero."
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/mis-tareas")
     async def handle_mis_tareas_command(ack, body, say):
@@ -192,7 +192,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)
         else:
             text = "No tienes tareas asignadas en la Planificación."
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/bitacora")
     async def handle_bitacora_command(ack, say):
@@ -208,7 +208,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         else:
             text = "⚠️ No se pudo leer la Bitácora o está vacía."
             
-        await say(text)
+        await say(f"{text}\n\n")
 
     @app.command("/avance")
     async def handle_avance_command(ack, body, say):
@@ -314,4 +314,5 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 "text": {"type": "mrkdwn", "text": f"*{resp}*\n{task_list}"}
             })
             
+        blocks.append({"type": "divider"})
         await say(blocks=blocks)
