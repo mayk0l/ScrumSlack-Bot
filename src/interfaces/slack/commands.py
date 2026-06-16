@@ -21,6 +21,7 @@ from src.application.excel_sync_service import ExcelSyncService
 from src.infrastructure.repositories.sprint_repo import SprintRepositoryImpl
 from src.infrastructure.repositories.metric_repo import MetricRepositoryImpl
 from src.application.valuelist_excel_service import ValuelistExcelService
+from src.config import settings
 
 
 def register_commands(app: AsyncApp, services: dict) -> None:
@@ -56,7 +57,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             sprint_repo
         )
         valuelist_svc = ValuelistExcelService(
-            "excel/Bitacora-Rentabilidad-Valuelist.xlsx",
+            settings.excel_file_path,
             # TODO: Mapeo temporal para demo, reemplazar con variables de entorno o DB
             {"U0123456": "Emiliano J."} 
         )
