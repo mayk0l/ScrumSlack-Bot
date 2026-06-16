@@ -63,96 +63,18 @@ async def lifespan(app: FastAPI):
     github_client = global_github_client
     scheduler = SchedulerService()
 
-    # Inyección manual de dependencias para handlers programados.
-    # En producción se recomienda un contenedor DI más robusto.
-    from src.application.github_service import GitHubService
-    from src.application.notification_service import NotificationService
-    from src.application.risk_service import RiskService
-    from src.application.standup_service import StandupService
-    from src.infrastructure.slack_client import SlackNotifier
-    from slack_sdk.web.async_client import AsyncWebClient
-
-    async def send_standup_reminder() -> None:
-        async with maker() as session:
-            team_repo = TeamRepositoryImpl(session)
-            teams = await team_repo.get_all()
-            for team in teams:
-                slack = AsyncWebClient(token=team.slack_bot_token)
-                notifier = SlackNotifier(slack)
-                service = NotificationService(notifier)
-                await service.send_standup_reminder(team.standup_channel_id)
-
-    async def send_daily_summary() -> None:
-        async with maker() as session:
-            team_repo = TeamRepositoryImpl(session)
-            standup_repo = StandupSessionRepositoryImpl(session)
-            response_repo = StandupResponseRepositoryImpl(session)
-            member_repo = MemberRepositoryImpl(session)
-            pr_repo = PullRequestRepositoryImpl(session)
-            risk_repo = RiskRepositoryImpl(session)
-            metric_repo = MetricRepositoryImpl(session)
-
-            standup_service = StandupService(
-                session_repo=standup_repo,
-                response_repo=response_repo,
-                member_repo=member_repo,
-            )
-            github_service = GitHubService(github_client, pr_repo)
-            risk_service = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
-            sprint_service = __import__(
-                "src.application.sprint_service", fromlist=["SprintService"]
-            ).SprintService(sprint_repo=SprintRepositoryImpl(session), metric_repo=metric_repo)
-            
-            valuelist_svc = __import__(
-                "src.application.valuelist_excel_service", fromlist=["ValuelistExcelService"]
-            ).ValuelistExcelService(settings.excel_file_path)
-            
-            report_service = __import__(
-                "src.application.report_service", fromlist=["ReportService"]
-            ).ReportService(standup_service, github_service, risk_service, ai_client=None, valuelist_service=valuelist_svc)
-
-            teams = await team_repo.get_all()
-            for team in teams:
-                slack = AsyncWebClient(token=team.slack_bot_token)
-                notifier = SlackNotifier(slack)
-                notification_service = NotificationService(notifier)
-                summary = await report_service.generate_daily_summary(
-                    team.id, team.standup_channel_id
-                )
-                await notification_service.send_daily_summary(
-                    team.standup_channel_id, summary
-                )
-
-    async def sync_github() -> None:
-        async with maker() as session:
-            team_repo = TeamRepositoryImpl(session)
-            pr_repo = PullRequestRepositoryImpl(session)
-            github_service = GitHubService(github_client, pr_repo)
-            teams = await team_repo.get_all()
-            for team in teams:
-                if settings.github_default_org:
-                    await github_service.sync_pull_requests(
-                        team.id,
-                        settings.github_default_org,
-                        [settings.github_default_org],
-                    )
-
-    async def detect_risks() -> None:
-        async with maker() as session:
-            standup_repo = StandupSessionRepositoryImpl(session)
-            response_repo = StandupResponseRepositoryImpl(session)
-            pr_repo = PullRequestRepositoryImpl(session)
-            risk_repo = RiskRepositoryImpl(session)
-            team_repo = TeamRepositoryImpl(session)
-            risk_service = RiskService(risk_repo, pr_repo, response_repo, standup_repo)
-            teams = await team_repo.get_all()
-            for team in teams:
-                await risk_service.detect_risks(team.id)
+    from src.infrastructure.jobs import (
+        send_standup_reminder,
+        send_daily_summary,
+        sync_github,
+        detect_risks,
+    )
+    import functools
 
     if settings.standup_time:
         hour, minute = map(int, settings.standup_time.split(":"))
         scheduler.add_daily_job(
-            send_standup_reminder,
+            functools.partial(send_standup_reminder, maker),
             hour=hour,
             minute=minute,
             timezone=settings.timezone,
@@ -162,7 +84,7 @@ async def lifespan(app: FastAPI):
     if settings.summary_time:
         hour, minute = map(int, settings.summary_time.split(":"))
         scheduler.add_daily_job(
-            send_daily_summary,
+            functools.partial(send_daily_summary, maker, github_client),
             hour=hour,
             minute=minute,
             timezone=settings.timezone,
