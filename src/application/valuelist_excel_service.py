@@ -212,26 +212,29 @@ class ValuelistExcelService:
             row_idx += 1
 
     async def get_my_tasks(self, target_name: str) -> list[dict[str, Any]]:
-        """Busca las tareas asignadas al usuario en la Hoja 3 (Planificación)."""
+        """Busca las tareas asignadas al usuario en Planificación y Administración."""
         if not target_name:
             return []
 
         def _read() -> list[dict[str, Any]]:
             try:
                 wb = openpyxl.load_workbook(self._excel_path, data_only=True)
-                ws = wb["Planificación"]
                 tasks = []
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    # Cols: 0=Act, 1=Desc, 2=Resp, 3=Inicio, 4=Fin, 5=%esp, 6=%logro
-                    act_id = row[0]
-                    resp = row[2]
-                    
-                    if act_id and str(act_id).startswith("A") and resp == target_name:
-                        tasks.append({
-                            "id": str(act_id),
-                            "desc": str(row[1]) if row[1] else "",
-                            "progress": float(row[6]) if row[6] is not None else 0.0
-                        })
+                for sheet_name in ["Planificación", "Administración"]:
+                    if sheet_name not in wb.sheetnames:
+                        continue
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        # Cols: 0=Act, 1=Desc, 2=Resp, 3=Inicio, 4=Fin, 5=%esp, 6=%logro
+                        act_id = row[0]
+                        resp = row[2]
+                        
+                        if act_id and (str(act_id).startswith("A") or str(act_id).startswith("AD")) and resp == target_name:
+                            tasks.append({
+                                "id": str(act_id),
+                                "desc": str(row[1]) if row[1] else "",
+                                "progress": float(row[6]) if row[6] is not None else 0.0
+                            })
                 return tasks
             except Exception:
                 return []
