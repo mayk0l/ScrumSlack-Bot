@@ -60,8 +60,13 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         desc = values["desc_block"]["desc_input"]["value"]
         resp_id = values["resp_block"]["resp_input"]["selected_user"]
         
-        user_info = await client.users_info(user=resp_id)
-        resp = user_info["user"].get("real_name") or user_info["user"].get("name")
+        try:
+            user_info = await client.users_info(user=resp_id)
+            resp = user_info["user"].get("real_name") or user_info["user"].get("name")
+        except Exception as e:
+            # Fallback if users:read scope is missing
+            print(f"Error fetching user info: {e}")
+            resp = f"<@{resp_id}>"
         start = values["start_block"]["start_input"]["value"]
         end = values["end_block"]["end_input"]["value"]
 
@@ -130,8 +135,13 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             desc = values["desc_block"]["desc_input"]["value"]
             resp_id = values["resp_block"]["resp_input"]["selected_user"]
             
-            user_info = await client.users_info(user=resp_id)
-            resp = user_info["user"].get("real_name") or user_info["user"].get("name")
+            try:
+                user_info = await client.users_info(user=resp_id)
+                resp = user_info["user"].get("real_name") or user_info["user"].get("name")
+            except Exception as e:
+                # Fallback if users:read scope is missing
+                print(f"Error fetching user info: {e}")
+                resp = f"<@{resp_id}>"
             start = values["start_block"]["start_input"]["value"]
             end = values["end_block"]["end_input"]["value"]
             await valuelist_svc.update_task_details(task_id, desc, resp, start, end)
