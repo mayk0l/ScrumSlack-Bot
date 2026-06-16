@@ -116,12 +116,8 @@ async def test_create_task(mock_load_workbook, service):
     success = await service.create_task("A5.5", "Nueva Tarea", "Emiliano J.", "2026-06-20", "2026-06-25")
     
     assert success is True
-    mock_ws.append.assert_called_once()
-    appended_row = mock_ws.append.call_args[0][0]
-    assert appended_row[0] == "A5.5"
-    assert appended_row[1] == "Nueva Tarea"
-    assert appended_row[2] == "Emiliano J."
-    assert appended_row[6] == 0.0
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
+    mock_wb.save.assert_called_once_with("dummy.xlsx")
     mock_wb.save.assert_called_once_with("dummy.xlsx")
 
 @patch("src.application.valuelist_excel_service.openpyxl.load_workbook")

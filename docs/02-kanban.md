@@ -505,7 +505,7 @@
 - **Dependencias:** `6.1`
 - **Descripción:** El bot debe poder leer, crear y avanzar tareas administrativas (AD).
 - **Criterio de aceptación:** Comandos como `/avance-admin` o integración de la Hoja 4 en el ecosistema.
-- **Estado:** 🚧 In Progress
+- **Estado:** ✅ Done
 
 #### 6.3 — Visión Global de Tareas
 - **ID:** `6.3`
@@ -514,7 +514,7 @@
 - **Dependencias:** `5.1`
 - **Descripción:** Comando `/todas-las-tareas` para listar todas las tareas abiertas agrupadas por responsable.
 - **Criterio de aceptación:** Muestra lista completa de tareas activas de la Hoja 3 y Hoja 4.
-- **Estado:** 🔲 Pendiente
+- **Estado:** 🚧 In Progress
 
 ---
 

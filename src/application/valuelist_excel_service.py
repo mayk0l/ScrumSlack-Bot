@@ -77,18 +77,17 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def update_task_progress(self, task_id: str, progress: float) -> bool:
-        """Actualiza el porcentaje de logro de una tarea en la Hoja 3."""
+        """Actualiza el porcentaje de logro de una tarea en Planificación o Administración."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
-                ws = wb["Planificación"]
-                
-                for row in ws.iter_rows(min_row=2):
-                    cell_id = row[0]
-                    if cell_id.value and str(cell_id.value) == task_id:
-                        row[6].value = progress
-                        wb.save(self._excel_path)
-                        return True
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2):
+                        if row[0].value and str(row[0].value) == task_id:
+                            row[6].value = progress
+                            wb.save(self._excel_path)
+                            return True
                 return False
             except Exception:
                 return False
@@ -123,13 +122,20 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_write)
 
     async def create_task(self, act_id: str, desc: str, resp: str, start: str, end: str) -> bool:
-        """Agrega una nueva fila al final de la Hoja 3 (Planificación)."""
+        """Agrega una nueva fila al final de la hoja correspondiente."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
-                ws = wb["Planificación"]
+                sheet_name = "Administración" if act_id.upper().startswith("AD") else "Planificación"
+                ws = wb[sheet_name]
                 
-                # Columnas: Actividad, Descripción, Responsable, Comienzo, Fin, % esp, % logro, Entregable, Comentarios
+                # Encontrar la primera fila libre en la columna A
+                last_row = 1
+                for i in range(2, ws.max_row + 2):
+                    if not ws.cell(row=i, column=1).value:
+                        last_row = i
+                        break
+                
                 from datetime import datetime
                 try:
                     start_dt = datetime.strptime(start, "%Y-%m-%d")
@@ -137,9 +143,15 @@ class ValuelistExcelService:
                 except ValueError:
                     start_dt = start
                     end_dt = end
-                    
-                new_row = [act_id, desc, resp, start_dt, end_dt, 0.0, 0.0, "", ""]
-                ws.append(new_row)
+
+                ws.cell(row=last_row, column=1).value = act_id
+                ws.cell(row=last_row, column=2).value = desc
+                ws.cell(row=last_row, column=3).value = resp
+                ws.cell(row=last_row, column=4).value = start_dt
+                ws.cell(row=last_row, column=5).value = end_dt
+                ws.cell(row=last_row, column=6).value = "NO COMENZADO"
+                ws.cell(row=last_row, column=7).value = 0.0
+                
                 wb.save(self._excel_path)
                 return True
             except Exception:
@@ -188,27 +200,28 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def get_task_by_id(self, task_id: str) -> dict[str, Any] | None:
-        """Busca una tarea en la Hoja 3 y devuelve sus detalles actuales."""
+        """Busca una tarea en Hoja 3 o Hoja 4 y devuelve sus detalles actuales."""
         def _read() -> dict[str, Any] | None:
             try:
                 wb = openpyxl.load_workbook(self._excel_path, data_only=True)
-                ws = wb["Planificación"]
                 
-                for row in ws.iter_rows(min_row=2, values_only=True):
-                    act_id = row[0]
-                    if act_id and str(act_id) == task_id:
-                        from datetime import datetime
-                        def _format_date(d):
-                            if isinstance(d, datetime): return d.strftime("%Y-%m-%d")
-                            return str(d)[:10] if d else ""
-                            
-                        return {
-                            "id": str(act_id),
-                            "desc": str(row[1]) if row[1] else "",
-                            "resp": str(row[2]) if row[2] else "",
-                            "start": _format_date(row[3]),
-                            "end": _format_date(row[4])
-                        }
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        act_id = row[0]
+                        if act_id and str(act_id) == task_id:
+                            from datetime import datetime
+                            def _format_date(d):
+                                if isinstance(d, datetime): return d.strftime("%Y-%m-%d")
+                                return str(d)[:10] if d else ""
+                                
+                            return {
+                                "id": str(act_id),
+                                "desc": str(row[1]) if row[1] else "",
+                                "resp": str(row[2]) if row[2] else "",
+                                "start": _format_date(row[3]),
+                                "end": _format_date(row[4])
+                            }
                 return None
             except Exception:
                 return None
@@ -216,11 +229,10 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def update_task_details(self, task_id: str, desc: str, resp: str, start: str, end: str) -> bool:
-        """Sobrescribe los detalles de una tarea existente en la Hoja 3."""
+        """Sobrescribe los detalles de una tarea existente en Hoja 3 o 4."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
-                ws = wb["Planificación"]
                 
                 from datetime import datetime
                 try:
@@ -230,15 +242,17 @@ class ValuelistExcelService:
                     start_dt = start
                     end_dt = end
                 
-                for row in ws.iter_rows(min_row=2):
-                    cell_id = row[0]
-                    if cell_id.value and str(cell_id.value) == task_id:
-                        row[1].value = desc
-                        row[2].value = resp
-                        row[3].value = start_dt
-                        row[4].value = end_dt
-                        wb.save(self._excel_path)
-                        return True
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2):
+                        cell_id = row[0]
+                        if cell_id.value and str(cell_id.value) == task_id:
+                            row[1].value = desc
+                            row[2].value = resp
+                            row[3].value = start_dt
+                            row[4].value = end_dt
+                            wb.save(self._excel_path)
+                            return True
                 return False
             except Exception:
                 return False
@@ -246,18 +260,19 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_write)
 
     async def delete_task_by_id(self, task_id: str) -> bool:
-        """Elimina una fila de la Hoja 3 (Planificación)."""
+        """Elimina una fila de la Hoja 3 o 4."""
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
-                ws = wb["Planificación"]
                 
-                for row in ws.iter_rows(min_row=2):
-                    cell_id = row[0]
-                    if cell_id.value and str(cell_id.value) == task_id:
-                        ws.delete_rows(cell_id.row)
-                        wb.save(self._excel_path)
-                        return True
+                for sheet_name in ["Planificación", "Administración"]:
+                    ws = wb[sheet_name]
+                    for row in ws.iter_rows(min_row=2):
+                        cell_id = row[0]
+                        if cell_id.value and str(cell_id.value) == task_id:
+                            ws.delete_rows(cell_id.row)
+                            wb.save(self._excel_path)
+                            return True
                 return False
             except Exception:
                 return False
