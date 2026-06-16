@@ -105,7 +105,7 @@ async def lifespan(app: FastAPI):
             
             valuelist_svc = __import__(
                 "src.application.valuelist_excel_service", fromlist=["ValuelistExcelService"]
-            ).ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+            ).ValuelistExcelService(settings.excel_file_path)
             
             report_service = __import__(
                 "src.application.report_service", fromlist=["ReportService"]

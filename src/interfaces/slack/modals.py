@@ -273,7 +273,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         end = values["end_block"]["end_input"]["value"]
 
         from src.application.valuelist_excel_service import ValuelistExcelService
-        valuelist_svc = ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+        from src.config import settings
+        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
         
         success = await valuelist_svc.create_task(act_id, desc, resp, start, end)
         
@@ -295,7 +296,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         
         if tipo == "tarea":
             from src.application.valuelist_excel_service import ValuelistExcelService
-            valuelist_svc = ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+            from src.config import settings
+            valuelist_svc = ValuelistExcelService(settings.excel_file_path)
             task = await valuelist_svc.get_task_by_id(item_id)
             
             if task:
@@ -310,7 +312,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 )
         elif tipo == "bitacora":
             from src.application.valuelist_excel_service import ValuelistExcelService
-            valuelist_svc = ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+            from src.config import settings
+            valuelist_svc = ValuelistExcelService(settings.excel_file_path)
             bitacora = await valuelist_svc.get_bitacora_summary()
             current_desc = bitacora.get(item_id.lower())
             
@@ -340,7 +343,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         should_delete = len(delete_opts) > 0 and delete_opts[0]["value"] == "delete"
         
         from src.application.valuelist_excel_service import ValuelistExcelService
-        valuelist_svc = ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+        from src.config import settings
+        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
         
         if should_delete:
             await valuelist_svc.delete_task_by_id(task_id)
@@ -359,5 +363,6 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         new_desc = values["desc_block"]["desc_input"]["value"]
         
         from src.application.valuelist_excel_service import ValuelistExcelService
-        valuelist_svc = ValuelistExcelService("excel/Bitacora-Rentabilidad-Valuelist.xlsx")
+        from src.config import settings
+        valuelist_svc = ValuelistExcelService(settings.excel_file_path)
         await valuelist_svc.update_bitacora(obj_id, new_desc)
