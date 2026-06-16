@@ -48,7 +48,8 @@ class ExcelSyncService:
 
         def _create() -> None:
             wb = openpyxl.Workbook()
-            wb.remove(wb.active)
+            if "Sheet" in wb.sheetnames:
+                wb.remove(wb["Sheet"])
 
             self._setup_sheet(wb, SHEET_MODULES, ["ID", "Nombre", "Estado", "Progreso %"])
             self._setup_sheet(wb, SHEET_GANTT, ["Sprint", "Inicio", "Fin", "Estado"])
@@ -70,9 +71,30 @@ class ExcelSyncService:
     def _setup_sheet(
         self, wb: Workbook, title: str, headers: list[str]
     ) -> Worksheet:
-        """Crea una hoja con headers."""
+        """Crea una hoja con headers y aplica estilo corporativo pro."""
+        from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+
         ws = wb.create_sheet(title=title)
         ws.append(headers)
+        
+        # Estilos premium
+        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=12)
+        align = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                             top=Side(style='thin'), bottom=Side(style='thin'))
+
+        for col_num, cell in enumerate(ws[1], 1):
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = align
+            cell.border = thin_border
+            # Ajustar ancho de columna base
+            col_letter = get_column_letter(col_num)
+            ws.column_dimensions[col_letter].width = max(len(str(cell.value)) + 8, 18)
+            
+        ws.freeze_panes = "A2"
         return ws
 
     async def sync_metrics(self, team_id: UUID) -> None:

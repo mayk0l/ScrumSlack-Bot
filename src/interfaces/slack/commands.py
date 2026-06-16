@@ -134,30 +134,46 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         await say(f"{text}\n\n")
 
     @app.command("/reporte")
-    async def handle_reporte_command(ack, say):
-        await ack()
-        container = get_container()
-        async with container.uow() as uow:
-            summary = await uow.report_svc.generate_daily_summary(
-                default_team_id, default_channel_id
-            )
-        await say(f"{summary}\n\n")
+    async def handle_reporte_command(ack, say, client, command):
+        await ack("⏳ *Generando reporte diario con IA...* Esto tomará unos segundos.")
+        
+        async def background_report():
+            try:
+                container = get_container()
+                async with container.uow() as uow:
+                    summary = await uow.report_svc.generate_daily_summary(
+                        default_team_id, default_channel_id
+                    )
+                await client.chat_postMessage(channel=command["channel_id"], text=f"✅ *Reporte Diario:*\n\n{summary}")
+            except Exception as e:
+                await client.chat_postMessage(channel=command["channel_id"], text=f"❌ *Error generando el reporte:* {str(e)}")
+
+        import asyncio
+        asyncio.create_task(background_report())
 
     @app.command("/github")
-    async def handle_github_command(ack, say):
-        await ack()
+    async def handle_github_command(ack, say, client, command):
         if not settings.github_default_org:
-            await say("❌ GitHub sync no configurado (falta GITHUB_DEFAULT_ORG).")
+            await ack("❌ GitHub sync no configurado (falta GITHUB_DEFAULT_ORG).")
             return
-        await say("⚙️ *Sincronizando Pull Requests desde GitHub...*")
-        container = get_container()
-        async with container.uow() as uow:
-            await uow.github_svc.sync_pull_requests(
-                default_team_id,
-                settings.github_default_org,
-                [settings.github_default_org],
-            )
-        await say("✅ Sincronización completada.")
+            
+        await ack("⚙️ *Sincronizando Pull Requests desde GitHub...*")
+        
+        async def background_github():
+            try:
+                container = get_container()
+                async with container.uow() as uow:
+                    await uow.github_svc.sync_pull_requests(
+                        default_team_id,
+                        settings.github_default_org,
+                        [settings.github_default_org],
+                    )
+                await client.chat_postMessage(channel=command["channel_id"], text="✅ Sincronización completada.")
+            except Exception as e:
+                await client.chat_postMessage(channel=command["channel_id"], text=f"❌ *Error sincronizando:* {str(e)}")
+
+        import asyncio
+        asyncio.create_task(background_github())
 
     @app.command("/test-standup")
     async def handle_test_standup_command(ack, body, client):
@@ -194,7 +210,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         container = get_container()
         async with container.uow() as uow:
             try:
-                modules = await svcs["excel"].get_module_progress()
+                modules = await container.valuelist_svc.get_module_progress()
                 if modules:
                     lines = [
                         f"• *{m.get('name', 'N/A')}*: {m.get('progress', '0')}% — {m.get('status', 'N/A')}"
@@ -210,13 +226,13 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/mis-tareas")
     async def handle_mis_tareas_command(ack, body, client, say):
         await ack()
-        svcs, session = await _get_services()
+        container = get_container()
         user_id = body.get("user_id")
         
         user_info = await client.users_info(user=user_id)
         real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
         
-        tasks = await uow.valuelist_svc.get_my_tasks(real_name)
+        tasks = await container.valuelist_svc.get_my_tasks(real_name)
         if tasks:
             lines = [f"• *[{t['id']}]* {t['desc']} — {t['progress'] * 100:.0f}%" for t in tasks]
             text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)
@@ -227,8 +243,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/bitacora")
     async def handle_bitacora_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        summary = await uow.valuelist_svc.get_bitacora_summary()
+        container = get_container()
+        summary = await container.valuelist_svc.get_bitacora_summary()
         
         if summary["og"]:
             text = f"🎯 *Objetivo General:*\n{summary['og']}\n\n"
@@ -243,6 +259,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/avance")
     async def handle_avance_command(ack, body, say):
         await ack()
+        container = get_container()
         text = body.get("text", "").strip()
         parts = text.split(" ")
         
@@ -257,8 +274,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             await say("⚠️ El porcentaje debe ser un número (Ej: 100 o 1.0)")
             return
             
-        svcs, session = await _get_services()
-        success = await uow.valuelist_svc.update_task_progress(task_id, progress)
+        success = await container.valuelist_svc.update_task_progress(task_id, progress)
         
         if success:
             await say(f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, no olvides usar `/evidencia {task_id} [URL]`")
@@ -268,6 +284,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/evidencia")
     async def handle_evidencia_command(ack, body, say):
         await ack()
+        container = get_container()
         text = body.get("text", "").strip()
         parts = text.split(" ", 1)
         
@@ -278,8 +295,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         task_id = parts[0]
         url = parts[1]
         
-        svcs, session = await _get_services()
-        success = await uow.valuelist_svc.add_evidence(task_id, url)
+        success = await container.valuelist_svc.add_evidence(task_id, url)
         
         if success:
             await say(f"🔗 Evidencia guardada para *{task_id}* en la Hoja 5.")
@@ -298,8 +314,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/gantt")
     async def handle_gantt_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        gantt_text = await uow.valuelist_svc.generate_gantt()
+        container = get_container()
+        gantt_text = await container.valuelist_svc.generate_gantt()
         await say(f"📊 *Diagrama de Gantt (Planificación)*\n\n{gantt_text}")
 
     @app.command("/descargar-excel")
@@ -319,8 +335,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/editar")
     async def handle_editar_command(ack, body, client):
         await ack()
-        svcs, _ = await _get_services()
-        options = await uow.valuelist_svc.get_all_edit_options()
+        container = get_container()
+        options = await container.valuelist_svc.get_all_edit_options()
         
         from src.interfaces.slack.modals import build_editar_selector_modal
         await client.views_open(
@@ -331,8 +347,8 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/todas-las-tareas")
     async def handle_todas_las_tareas_command(ack, say):
         await ack()
-        svcs, session = await _get_services()
-        grouped_tasks = await uow.valuelist_svc.get_all_active_tasks()
+        container = get_container()
+        grouped_tasks = await container.valuelist_svc.get_all_active_tasks()
         
         if not grouped_tasks:
             await say("🎉 ¡No hay tareas activas en el Excel!")
