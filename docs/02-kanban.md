@@ -549,6 +549,23 @@ _Espacio reservado para tareas validadas según su criterio de aceptación._
 - **Descripción:** Redactar `docs/04-decisiones-de-arquitectura.md` y `docs/05-changelog.md`.
 - **Estado:** ✅ Done
 
+### Fase D — Refactorización y Nuevos Comandos
+- **ID:** `D.1`
+- **Descripción:** Nuevos comandos de Slack (`/set-canal-reportes`, `/github`).
+- **Estado:** ✅ Done
+
+- **ID:** `D.2`
+- **Descripción:** Refactorización arquitectónica (Contenedor IoC nativo, división de `orm_models.py`, extracción de tareas a `jobs.py`, extracción de Slack Block Kits a JSON).
+- **Estado:** ✅ Done
+
+- **ID:** `D.3`
+- **Descripción:** Mejoras de UX/UI. Tareas en background para evitar timeouts en comandos lentos de Slack.
+- **Estado:** ✅ Done
+
+- **ID:** `D.4`
+- **Descripción:** Mejoras en Reportes y Excel (renderizado premium dinámico, mega-modal de tareas, borrado de objetivos, fix en dimensiones y soporte ampliado para Hoja 4).
+- **Estado:** ✅ Done
+
 ---
 
 ## 🎯 Checklist Final de Validación
