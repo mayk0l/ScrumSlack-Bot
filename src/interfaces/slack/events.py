@@ -115,8 +115,17 @@ def register_events(app: AsyncApp, services: dict) -> None:
                             async with httpx.AsyncClient() as http_client:
                                 resp = await http_client.get(file_url, headers=headers)
                                 resp.raise_for_status()
-                                with open(settings.excel_file_path, "wb") as file_out:
-                                    file_out.write(resp.content)
+                                
+                            from src.container import get_container
+                            container = get_container()
+                            is_valid, err_msg = await container.valuelist_svc.validate_excel_file(resp.content)
+                            
+                            if not is_valid:
+                                await say(f"⚠️ *Excel no válido:* Tu archivo no pudo ser importado debido al siguiente error:\n\n> `{err_msg}`\n\nPor favor, corrígelo y vuelve a intentarlo para evitar dañar la base de datos.")
+                                return
+                                
+                            with open(settings.excel_file_path, "wb") as file_out:
+                                file_out.write(resp.content)
                             await say("✅ *¡Éxito!* He actualizado mi base de datos interna con el archivo Excel que me enviaste. Los modales y comandos ya están sincronizados y usaré esta versión como la principal.")
                         except Exception as e:
                             logger.error(f"Error downloading file: {e}")

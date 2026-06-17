@@ -11,6 +11,85 @@ class ValuelistExcelService:
     def __init__(self, excel_path: str):
         self._excel_path = excel_path
 
+    async def validate_excel_file(self, file_content: bytes) -> tuple[bool, str]:
+        """Valida que el contenido de un archivo Excel sea compatible con el sistema.
+        
+        Retorna (True, "") si es válido, o (False, "mensaje de error") si falla la validación.
+        """
+        import io
+        from datetime import datetime, date
+        
+        def _validate() -> tuple[bool, str]:
+            try:
+                # 1. Cargar el libro en memoria
+                wb = openpyxl.load_workbook(io.BytesIO(file_content), data_only=True)
+            except Exception as e:
+                return False, f"El archivo no es un libro de Excel válido (.xlsx) o está corrupto. Error: {str(e)}"
+            
+            # 2. Verificar hojas requeridas
+            required_sheets = ["Bitácora", "Planificación", "Administración", "Evidencia"]
+            for s in required_sheets:
+                if s not in wb.sheetnames:
+                    return False, f"Falta la pestaña obligatoria: '{s}'."
+            
+            # 3. Validar hoja Bitácora
+            ws_bit = wb["Bitácora"]
+            if ws_bit.max_column < 3:
+                return False, "La pestaña 'Bitácora' debe tener al menos 3 columnas (Identificador, Campo, Valor/Descripción)."
+                
+            # 4. Validar hojas de tareas (Planificación y Administración)
+            for sheet_name in ["Planificación", "Administración"]:
+                ws = wb[sheet_name]
+                if ws.max_column < 7:
+                    return False, f"La pestaña '{sheet_name}' debe tener al menos 7 columnas (ID, Descripción, Responsable, Inicio, Fin, Estado, % Logro)."
+                
+                # Validar unicidad de IDs de tareas y tipos de datos por fila
+                seen_ids = set()
+                row_idx = 1
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    row_idx += 1
+                    act_id = row[0]
+                    if not act_id:
+                        continue
+                    
+                    act_str = str(act_id).strip()
+                    if not (act_str.startswith("A") or act_str.startswith("AD")):
+                        continue
+                        
+                    # Validar IDs duplicados
+                    if act_str in seen_ids:
+                        return False, f"ID de tarea duplicado '{act_str}' en la pestaña '{sheet_name}', fila {row_idx}."
+                    seen_ids.add(act_str)
+                    
+                    # Validar Responsable
+                    resp = row[2]
+                    if not resp or not str(resp).strip():
+                        return False, f"Falta el 'Responsable' para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx}."
+                        
+                    # Validar Fechas (columnas index 3 y 4)
+                    for col_name, col_idx in [("Comienzo", 3), ("Fin", 4)]:
+                        val = row[col_idx]
+                        if val is not None:
+                            if not isinstance(val, (datetime, date)):
+                                try:
+                                    datetime.strptime(str(val).strip()[:10], "%Y-%m-%d")
+                                except ValueError:
+                                    return False, f"Formato de fecha inválido en la columna '{col_name}' para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx}. Debe ser YYYY-MM-DD o formato de fecha de Excel."
+                    
+                    # Validar % logro (columna index 6)
+                    logro = row[6]
+                    if logro is not None:
+                        try:
+                            val_logro = float(logro)
+                            if val_logro < 0.0 or val_logro > 100.0:
+                                return False, f"El porcentaje de logro para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx} debe estar entre 0 y 100 (o 0.0 y 1.0). Valor recibido: {logro}."
+                        except ValueError:
+                            return False, f"El porcentaje de logro para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx} debe ser un valor numérico. Recibido: '{logro}'."
+            
+            return True, ""
+            
+        return await asyncio.to_thread(_validate)
+
     @staticmethod
     def _apply_gantt_and_styles(wb: openpyxl.Workbook):
         from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
