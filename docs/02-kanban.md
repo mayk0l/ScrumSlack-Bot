@@ -528,7 +528,7 @@
 - **Dependencias:** Ninguna
 - **Descripción:** Implementar OpenPyXL Tables nativas, DataBars condicionales para % de logro y Freeze Panes.
 - **Criterio de aceptación:** El Excel generado incluye estilos de tabla nativos de Excel y barras de progreso visuales.
-- **Estado:** 🚧 In Progress
+- **Estado:** ✅ Done
 
 ---
 
