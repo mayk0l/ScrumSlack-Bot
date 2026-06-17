@@ -15,6 +15,9 @@ class ValuelistExcelService:
     def _apply_gantt_and_styles(wb: openpyxl.Workbook):
         from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
         from openpyxl.utils import get_column_letter
+        from openpyxl.worksheet.table import Table, TableStyleInfo
+        from openpyxl.formatting.rule import DataBarRule
+        import openpyxl.worksheet.conditional_formatting
         from datetime import datetime, timedelta
 
         header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
@@ -34,14 +37,13 @@ class ValuelistExcelService:
                 continue
             ws = wb[sheet_name]
             
+            # Freeze panes for UX (freeze row 1 and columns A, B)
+            ws.freeze_panes = "C2"
+            
             # Ensure headers
             for col_idx, h in enumerate(headers, 1):
                 cell = ws.cell(row=1, column=col_idx)
                 cell.value = h
-                cell.fill = header_fill
-                cell.font = header_font
-                cell.alignment = align_center
-                cell.border = thin_border
                 
             # Column widths
             ws.column_dimensions['A'].width = 12
@@ -50,26 +52,46 @@ class ValuelistExcelService:
             ws.column_dimensions['D'].width = 15
             ws.column_dimensions['E'].width = 15
             ws.column_dimensions['F'].width = 20
-            ws.column_dimensions['G'].width = 12
+            ws.column_dimensions['G'].width = 15
             ws.column_dimensions['H'].width = 30
             ws.column_dimensions['I'].width = 30
 
-            for row in ws.iter_rows(min_row=2, max_row=max(2, ws.max_row), max_col=9):
+            max_r = max(2, ws.max_row)
+
+            # Native Tables for Premium look (Zebra stripes, auto filters)
+            table_name = f"Tabla_{sheet_name.replace(' ', '')[:20]}"
+            if table_name in ws.tables:
+                ws.tables[table_name].ref = f"A1:I{max_r}"
+            else:
+                tab = Table(displayName=table_name, ref=f"A1:I{max_r}")
+                style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
+                                       showLastColumn=False, showRowStripes=True, showColumnStripes=False)
+                tab.tableStyleInfo = style
+                ws.add_table(tab)
+
+            # DataBars conditional formatting for percentage
+            ws.conditional_formatting = openpyxl.worksheet.conditional_formatting.ConditionalFormattingList()
+            rule = DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color="5A8AC6")
+            ws.conditional_formatting.add(f"G2:G{max_r}", rule)
+
+            # Cell formatting inside the table
+            for row in ws.iter_rows(min_row=2, max_row=max_r, max_col=9):
                 for cell in row:
+                    if cell.column in (6, 7):
+                        cell.number_format = '0%'
                     cell.alignment = align_left if cell.column in (2, 8, 9) else align_center
-                    cell.border = thin_border
                     
         # 1.5. Format Evidencia
         if "Evidencia" in wb.sheetnames:
             ws_ev = wb["Evidencia"]
+            
+            # Freeze panes
+            ws_ev.freeze_panes = "B2"
+            
             ev_headers = ["Actividad", "Descripción", "Enlace / Ubicación"]
             for col_idx, h in enumerate(ev_headers, 1):
                 cell = ws_ev.cell(row=1, column=col_idx)
                 cell.value = h
-                cell.fill = header_fill
-                cell.font = header_font
-                cell.alignment = align_center
-                cell.border = thin_border
             
             ws_ev.column_dimensions['A'].width = 12
             ws_ev.column_dimensions['B'].width = 40
@@ -82,11 +104,23 @@ class ValuelistExcelService:
                     last_valid_row = row[0].row
             if last_valid_row < ws_ev.max_row:
                 ws_ev.delete_rows(last_valid_row + 1, ws_ev.max_row - last_valid_row)
+                
+            max_ev_row = max(2, ws_ev.max_row)
             
-            for row in ws_ev.iter_rows(min_row=2, max_row=max(2, ws_ev.max_row), max_col=3):
+            # Native Table for Evidencia
+            ev_table_name = "Tabla_Evidencia"
+            if ev_table_name in ws_ev.tables:
+                ws_ev.tables[ev_table_name].ref = f"A1:C{max_ev_row}"
+            else:
+                tab_ev = Table(displayName=ev_table_name, ref=f"A1:C{max_ev_row}")
+                style_ev = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
+                                       showLastColumn=False, showRowStripes=True, showColumnStripes=False)
+                tab_ev.tableStyleInfo = style_ev
+                ws_ev.add_table(tab_ev)
+            
+            for row in ws_ev.iter_rows(min_row=2, max_row=max_ev_row, max_col=3):
                 for cell in row:
                     cell.alignment = align_left if cell.column in (2, 3) else align_center
-                    cell.border = thin_border
                     
         # 2. Draw Gantt Chart
         tasks = []

@@ -520,7 +520,15 @@
 
 ## 🚧 In Progress
 
-_Espacio reservado para mover tareas activas desde Backlog._
+### Fase E — Mejoras Premium y UX
+#### E.1 — Estética Premium del Excel (Tablas, DataBars, Freeze Panes)
+- **ID:** `E.1`
+- **Prioridad:** P1
+- **Esfuerzo:** M
+- **Dependencias:** Ninguna
+- **Descripción:** Implementar OpenPyXL Tables nativas, DataBars condicionales para % de logro y Freeze Panes.
+- **Criterio de aceptación:** El Excel generado incluye estilos de tabla nativos de Excel y barras de progreso visuales.
+- **Estado:** 🚧 In Progress
 
 ---
 
