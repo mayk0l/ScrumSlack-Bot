@@ -17,7 +17,6 @@ class ValuelistExcelService:
         from openpyxl.utils import get_column_letter
         from openpyxl.worksheet.table import Table, TableStyleInfo
         from openpyxl.formatting.rule import DataBarRule
-        import openpyxl.worksheet.conditional_formatting
         from datetime import datetime, timedelta
 
         header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
@@ -70,7 +69,7 @@ class ValuelistExcelService:
                 ws.add_table(tab)
 
             # DataBars conditional formatting for percentage
-            ws.conditional_formatting = openpyxl.worksheet.conditional_formatting.ConditionalFormattingList()
+            ws.conditional_formatting = type(ws.conditional_formatting)()
             rule = DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color="5A8AC6")
             ws.conditional_formatting.add(f"G2:G{max_r}", rule)
 
