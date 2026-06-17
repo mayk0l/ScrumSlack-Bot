@@ -112,5 +112,6 @@ class ReportService:
                 context=summary,
             )
             return f"{summary}\n\n## 🤖 Análisis IA\n\n{analysis}"
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ Error generando resumen con IA: {e}", flush=True)
             return summary

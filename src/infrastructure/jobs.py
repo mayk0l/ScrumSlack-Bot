@@ -33,7 +33,7 @@ async def send_daily_summary() -> None:
             slack = AsyncWebClient(token=team.slack_bot_token)
             notifier = SlackNotifier(slack)
             notification_service = NotificationService(notifier)
-            summary = await uow.report_svc.generate_daily_summary(
+            summary = await uow.report_svc.generate_ai_summary(
                 team.id, team.standup_channel_id
             )
             await notification_service.send_daily_summary(

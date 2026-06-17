@@ -357,59 +357,136 @@ def build_avance_modal(tareas: list[dict[str, Any]]) -> dict[str, Any]:
         ]
     }
 
-def build_app_home(proyecto_name: str) -> dict[str, Any]:
+def build_app_home(proyecto_name: str, tasks: list[dict[str, Any]] = None) -> dict[str, Any]:
+    if tasks is None:
+        tasks = []
+        
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f"🏠 Bienvenido a {proyecto_name}"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desde aquí puedes gestionar tu trabajo diario rápidamente con botones, o consultar el estado sin comandos."
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "📝 Crear Tarea"},
+                    "style": "primary",
+                    "action_id": "home_crear_tarea"
+                },
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "📈 Registrar Avance General"},
+                    "action_id": "home_actualizar_avance"
+                },
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "☀️ Hacer Standup"},
+                    "action_id": "home_hacer_standup"
+                }
+            ]
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "📋 Tus Tareas Activas"
+            }
+        }
+    ]
+    
+    if tasks:
+        for t in tasks:
+            filled_blocks = int(round(t.get('progress', 0.0) * 10))
+            empty_blocks = 10 - filled_blocks
+            progress_bar = "█" * filled_blocks + "░" * empty_blocks
+            
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*[{t['id']}]* {t['desc']}\n`{progress_bar}` *{t.get('progress', 0.0) * 100:.0f}%*"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "📈 Actualizar",
+                        "emoji": True
+                    },
+                    "value": f"{t['id']}|{t.get('progress', 0.0)}",
+                    "action_id": "update_task_click"
+                }
+            })
+    else:
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "_No tienes tareas asignadas en la planificación actual._"
+            }
+        })
+        
+    blocks.extend([
+        {
+            "type": "divider"
+        },
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn", 
+                    "text": "💡 *Tip Pro:* Si editas el Excel manualmente, envíame el archivo `project_tracking.xlsx` por mensaje directo (DM) y sincronizaré mi base de datos."
+                }
+            ]
+        }
+    ])
+    
     return {
         "type": "home",
+        "blocks": blocks
+    }
+
+def build_avance_individual_modal(task_id: str, current_progress: float = 0.0) -> dict[str, Any]:
+    """Genera el modal para actualizar el avance de una tarea individual."""
+    return {
+        "type": "modal",
+        "callback_id": "avance_individual_submission",
+        "private_metadata": task_id,
+        "title": {"type": "plain_text", "text": "Actualizar Avance"},
+        "submit": {"type": "plain_text", "text": "Guardar"},
+        "close": {"type": "plain_text", "text": "Cancelar"},
         "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": f"🏠 Bienvenido a {proyecto_name}"
-                }
-            },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Desde aquí puedes gestionar tu trabajo diario rápidamente con botones, o consultar el estado sin comandos."
+                    "text": f"Actualizando el avance de la tarea *{task_id}*.\n*Avance actual:* {current_progress*100:.0f}%"
                 }
             },
             {
-                "type": "divider"
-            },
-            {
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "📝 Crear Tarea"},
-                        "style": "primary",
-                        "action_id": "home_crear_tarea"
-                    },
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "📈 Actualizar Avance"},
-                        "action_id": "home_actualizar_avance"
-                    },
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "☀️ Hacer Standup"},
-                        "action_id": "home_hacer_standup"
-                    }
-                ]
-            },
-            {
-                "type": "divider"
-            },
-            {
-                "type": "context",
-                "elements": [
-                    {
-                        "type": "mrkdwn", 
-                        "text": "💡 *Tip Pro:* Si editas el Excel manualmente, envíame el archivo `project_tracking.xlsx` por mensaje directo (DM) y sincronizaré mi base de datos."
-                    }
-                ]
+                "type": "input",
+                "block_id": "progress_block",
+                "label": {"type": "plain_text", "text": "Nuevo Porcentaje de Avance (0 a 100)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "progress_input",
+                    "placeholder": {"type": "plain_text", "text": "Ej: 75"}
+                }
             }
         ]
     }

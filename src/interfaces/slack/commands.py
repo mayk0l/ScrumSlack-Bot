@@ -157,7 +157,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             try:
                 container = get_container()
                 async with container.uow() as uow:
-                    summary = await uow.report_svc.generate_daily_summary(
+                    summary = await uow.report_svc.generate_ai_summary(
                         default_team_id, default_channel_id
                     )
                 await client.chat_postMessage(channel=command["channel_id"], text=f"✅ *Reporte Diario:*\n\n{summary}")
@@ -209,7 +209,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         container = get_container()
         async with container.uow() as uow:
             # Reusa la misma lógica del reporte, pero enviada como el servicio de notificaciones
-            summary = await uow.report_svc.generate_daily_summary(
+            summary = await uow.report_svc.generate_ai_summary(
                 default_team_id, default_channel_id
             )
             
@@ -250,11 +250,45 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         
         tasks = await container.valuelist_svc.get_my_tasks(real_name)
         if tasks:
-            lines = [f"• *[{t['id']}]* {t['desc']} — {t['progress'] * 100:.0f}%" for t in tasks]
-            text = f"📋 *Tus tareas asignadas:*\n" + "\n".join(lines)
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "📋 Tus Tareas Asignadas"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Hola *{real_name}*, aquí tienes el listado de tus tareas activas:"
+                    }
+                },
+                {"type": "divider"}
+            ]
+            for t in tasks:
+                blocks.append({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*[{t['id']}]* {t['desc']}\n*Progreso:* `{t['progress'] * 100:.0f}%`"
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "📈 Actualizar",
+                            "emoji": True
+                        },
+                        "value": f"{t['id']}|{t['progress']}",
+                        "action_id": "update_task_click"
+                    }
+                })
+            blocks.append({"type": "divider"})
+            await say(blocks=blocks)
         else:
-            text = "No tienes tareas asignadas en la Planificación."
-        await say(f"{text}\n\n")
+            await say("No tienes tareas asignadas en la Planificación.")
 
     @app.command("/bitacora")
     async def handle_bitacora_command(ack, say):

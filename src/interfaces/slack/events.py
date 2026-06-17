@@ -33,11 +33,19 @@ def register_events(app: AsyncApp, services: dict) -> None:
         
         from src.container import get_container
         container = get_container()
+        
+        try:
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await container.valuelist_svc.get_my_tasks(real_name)
+        except Exception:
+            tasks = []
+            
         summary = await container.valuelist_svc.get_bitacora_summary()
         proyecto = summary.get("proyecto", "ScrumSlack Bot")
         
         from src.interfaces.slack.template_loader import build_app_home
-        view = build_app_home(proyecto)
+        view = build_app_home(proyecto, tasks)
         
         await client.views_publish(
             user_id=user_id,
@@ -67,6 +75,19 @@ def register_events(app: AsyncApp, services: dict) -> None:
         await ack()
         from src.interfaces.slack.template_loader import build_standup_modal
         await client.views_open(trigger_id=body["trigger_id"], view=build_standup_modal())
+
+    @app.action("update_task_click")
+    async def handle_update_task_click(ack, body, client):
+        await ack()
+        val = body["actions"][0]["value"]
+        task_id, progress_str = val.split("|")
+        progress = float(progress_str)
+        
+        from src.interfaces.slack.template_loader import build_avance_individual_modal
+        await client.views_open(
+            trigger_id=body["trigger_id"],
+            view=build_avance_individual_modal(task_id, progress)
+        )
 
     @app.event("message")
     async def handle_message_events(event, say, client, logger):

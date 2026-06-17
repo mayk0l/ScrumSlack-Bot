@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     openrouter_model: str = "anthropic/claude-sonnet-4"
 
+    # Groq
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
     # Standup
     standup_channel_id: str
     standup_time: str = "09:00"

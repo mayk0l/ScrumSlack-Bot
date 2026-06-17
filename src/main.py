@@ -27,11 +27,26 @@ from src.infrastructure.scheduler import SchedulerService
 from src.infrastructure.slack_client import create_slack_app, create_slack_handler
 from src.interfaces.api.routes import router as api_router
 from src.interfaces.slack.bolt_app import register_handlers
+from src.infrastructure.ai_client import AIClient
 
 from src.container import init_container
 
+ai_client = None
+if settings.openrouter_api_key and settings.openrouter_api_key != "sk-or-your-key":
+    ai_client = AIClient(
+        api_key=settings.openrouter_api_key,
+        model=settings.openrouter_model,
+        base_url="https://openrouter.ai/api/v1"
+    )
+elif settings.groq_api_key and settings.groq_api_key != "gsk_your_groq_key":
+    ai_client = AIClient(
+        api_key=settings.groq_api_key,
+        model=settings.groq_model,
+        base_url="https://api.groq.com/openai/v1"
+    )
+
 global_github_client = GitHubClient(settings.github_token)
-init_container(settings, global_github_client)
+init_container(settings, global_github_client, ai_client)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

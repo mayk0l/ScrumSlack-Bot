@@ -85,10 +85,20 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         
         success = await valuelist_svc.create_task(oe_id, desc, resp, start, end, entregable, comentarios)
         
-        # Opcional: enviar mensaje al usuario o al canal de la creación
-        # slack_client = app.client
-        # user_id = body["user"]["id"]
-        # await slack_client.chat_postMessage(channel=user_id, text=f"Tarea {act_id} creada." if success else "Error")
+        # REFRESH APP HOME
+        try:
+            user_id = body["user"]["id"]
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await valuelist_svc.get_my_tasks(real_name)
+            summary = await valuelist_svc.get_bitacora_summary()
+            proyecto = summary.get("proyecto", "ScrumSlack Bot")
+            
+            from src.interfaces.slack.template_loader import build_app_home
+            view = build_app_home(proyecto, tasks)
+            await client.views_publish(user_id=user_id, view=view)
+        except Exception as e:
+            print(f"Error refreshing app home: {e}")
 
     @app.view("editar_selector_submission")
     async def handle_editar_selector_submission(ack, body, view):
@@ -164,6 +174,21 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 comentarios = values["comentarios_block"]["comentarios_input"].get("value") or ""
                 
             await valuelist_svc.update_task_details(task_id, desc, resp, start, end, entregable, comentarios)
+            
+        # REFRESH APP HOME
+        try:
+            user_id = body["user"]["id"]
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await valuelist_svc.get_my_tasks(real_name)
+            summary = await valuelist_svc.get_bitacora_summary()
+            proyecto = summary.get("proyecto", "ScrumSlack Bot")
+            
+            from src.interfaces.slack.template_loader import build_app_home
+            view = build_app_home(proyecto, tasks)
+            await client.views_publish(user_id=user_id, view=view)
+        except Exception as e:
+            print(f"Error refreshing app home: {e}")
 
     @app.view("bitacora_completa_submission")
     async def handle_bitacora_completa_submission(ack, body, view, client):
@@ -225,5 +250,55 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 channel=user_id, 
                 text=f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, recuerda reportar la URL usando `/evidencia {task_id} [URL]`"
             )
+            try:
+                user_info = await client.users_info(user=user_id)
+                real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+                tasks = await container.valuelist_svc.get_my_tasks(real_name)
+                summary = await container.valuelist_svc.get_bitacora_summary()
+                proyecto = summary.get("proyecto", "ScrumSlack Bot")
+                
+                from src.interfaces.slack.template_loader import build_app_home
+                view = build_app_home(proyecto, tasks)
+                await client.views_publish(user_id=user_id, view=view)
+            except Exception as e:
+                print(f"Error refreshing app home: {e}")
+        else:
+            await client.chat_postMessage(channel=user_id, text=f"❌ No se pudo actualizar {task_id}.")
+
+    @app.view("avance_individual_submission")
+    async def handle_avance_individual_submission(ack, body, view, client):
+        task_id = view["private_metadata"]
+        values = view["state"]["values"]
+        prog_str = values["progress_block"]["progress_input"]["value"]
+        
+        try:
+            progress = float(prog_str) / 100.0 if float(prog_str) > 1 else float(prog_str)
+        except ValueError:
+            await ack(response_action="errors", errors={"progress_block": "Debe ser un número (Ej. 50 o 0.5)"})
+            return
+            
+        await ack()
+        from src.container import get_container
+        container = get_container()
+        success = await container.valuelist_svc.update_task_progress(task_id, progress)
+        
+        user_id = body["user"]["id"]
+        if success:
+            await client.chat_postMessage(
+                channel=user_id, 
+                text=f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, recuerda reportar la URL usando `/evidencia {task_id} [URL]`"
+            )
+            try:
+                user_info = await client.users_info(user=user_id)
+                real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+                tasks = await container.valuelist_svc.get_my_tasks(real_name)
+                summary = await container.valuelist_svc.get_bitacora_summary()
+                proyecto = summary.get("proyecto", "ScrumSlack Bot")
+                
+                from src.interfaces.slack.template_loader import build_app_home
+                view = build_app_home(proyecto, tasks)
+                await client.views_publish(user_id=user_id, view=view)
+            except Exception as e:
+                print(f"Error refreshing app home: {e}")
         else:
             await client.chat_postMessage(channel=user_id, text=f"❌ No se pudo actualizar {task_id}.")
