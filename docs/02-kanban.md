@@ -530,6 +530,33 @@
 - **Criterio de aceptación:** El Excel generado incluye estilos de tabla nativos de Excel y barras de progreso visuales.
 - **Estado:** ✅ Done
 
+#### E.2 — Modales UX Mejorados (Datepicker, Selectores Dinámicos)
+- **ID:** `E.2`
+- **Prioridad:** P1
+- **Esfuerzo:** S
+- **Dependencias:** Ninguna
+- **Descripción:** Usar `datepicker` nativo de Slack para fechas en `/crear-tarea` y modal dinámico para `/avance` con `static_select`.
+- **Criterio de aceptación:** Las fechas son elegidas desde un calendario, no escritas. Modal para avances cargado exitosamente.
+- **Estado:** ✅ Done
+
+#### E.3 — Sincronización Bidireccional de Excel por DM (Upload)
+- **ID:** `E.3`
+- **Prioridad:** P1
+- **Esfuerzo:** M
+- **Dependencias:** Ninguna
+- **Descripción:** Manejar evento `message` en DMs, descargar archivo `.xlsx` subido por el usuario y sobreescribir `project_tracking.xlsx`.
+- **Criterio de aceptación:** Enviar archivo por DM al bot actualiza la base de datos interna.
+- **Estado:** ✅ Done
+
+#### E.4 — App Home (Dashboard Persistente)
+- **ID:** `E.4`
+- **Prioridad:** P0
+- **Esfuerzo:** M
+- **Dependencias:** Ninguna
+- **Descripción:** Manejar evento `app_home_opened`, publicando una vista central (`views.publish`) con botones interactivos para gestionar tareas.
+- **Criterio de aceptación:** Pestaña "Home" del bot muestra dashboard funcional y botones abren modales.
+- **Estado:** ✅ Done
+
 ---
 
 ## ⏸️ Blocked

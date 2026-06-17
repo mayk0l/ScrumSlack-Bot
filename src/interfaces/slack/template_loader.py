@@ -356,3 +356,60 @@ def build_avance_modal(tareas: list[dict[str, Any]]) -> dict[str, Any]:
             }
         ]
     }
+
+def build_app_home(proyecto_name: str) -> dict[str, Any]:
+    return {
+        "type": "home",
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": f"🏠 Bienvenido a {proyecto_name}"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Desde aquí puedes gestionar tu trabajo diario rápidamente con botones, o consultar el estado sin comandos."
+                }
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "📝 Crear Tarea"},
+                        "style": "primary",
+                        "action_id": "home_crear_tarea"
+                    },
+                    {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "📈 Actualizar Avance"},
+                        "action_id": "home_actualizar_avance"
+                    },
+                    {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "☀️ Hacer Standup"},
+                        "action_id": "home_hacer_standup"
+                    }
+                ]
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn", 
+                        "text": "💡 *Tip Pro:* Si editas el Excel manualmente, envíame el archivo `project_tracking.xlsx` por mensaje directo (DM) y sincronizaré mi base de datos."
+                    }
+                ]
+            }
+        ]
+    }
