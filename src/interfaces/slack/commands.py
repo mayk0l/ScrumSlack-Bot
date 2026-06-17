@@ -290,29 +290,35 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         )
 
     @app.command("/avance")
-    async def handle_avance_command(ack, body, say):
+    async def handle_avance_command(ack, body, say, client):
         await ack()
         container = get_container()
         text = body.get("text", "").strip()
         parts = text.split(" ")
         
-        if len(parts) < 2:
-            await say("⚠️ Uso incorrecto. Ejemplo: `/avance A2.1 100`")
-            return
+        if text and len(parts) >= 2:
+            task_id = parts[0]
+            try:
+                progress = float(parts[1]) / 100.0 if float(parts[1]) > 1 else float(parts[1])
+            except ValueError:
+                await say("⚠️ El porcentaje debe ser un número (Ej: 100 o 1.0)")
+                return
+                
+            success = await container.valuelist_svc.update_task_progress(task_id, progress)
             
-        task_id = parts[0]
-        try:
-            progress = float(parts[1]) / 100.0 if float(parts[1]) > 1 else float(parts[1])
-        except ValueError:
-            await say("⚠️ El porcentaje debe ser un número (Ej: 100 o 1.0)")
-            return
-            
-        success = await container.valuelist_svc.update_task_progress(task_id, progress)
-        
-        if success:
-            await say(f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, no olvides usar `/evidencia {task_id} [URL]`")
+            if success:
+                await say(f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, no olvides usar `/evidencia {task_id} [URL]`")
+            else:
+                await say(f"❌ No se encontró la tarea *{task_id}* en la Planificación.")
         else:
-            await say(f"❌ No se encontró la tarea *{task_id}* en la Planificación.")
+            # Abrir Modal
+            options = await container.valuelist_svc.get_all_edit_options()
+            tareas = options.get("tareas", [])
+            from src.interfaces.slack.template_loader import build_avance_modal
+            await client.views_open(
+                trigger_id=body["trigger_id"],
+                view=build_avance_modal(tareas)
+            )
 
     @app.command("/evidencia")
     async def handle_evidencia_command(ack, body, say):

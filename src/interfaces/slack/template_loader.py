@@ -85,19 +85,21 @@ def build_crear_tarea_modal(oes: list[dict[str, str]] = None) -> dict[str, Any]:
             {
                 "type": "input",
                 "block_id": "start_block",
-                "label": {"type": "plain_text", "text": "Fecha Inicio (YYYY-MM-DD)"},
+                "label": {"type": "plain_text", "text": "Fecha Inicio"},
                 "element": {
-                    "type": "plain_text_input",
-                    "action_id": "start_input"
+                    "type": "datepicker",
+                    "action_id": "start_input",
+                    "placeholder": {"type": "plain_text", "text": "Selecciona fecha"}
                 }
             },
             {
                 "type": "input",
                 "block_id": "end_block",
-                "label": {"type": "plain_text", "text": "Fecha Fin Esperado (YYYY-MM-DD)"},
+                "label": {"type": "plain_text", "text": "Fecha Fin Esperado"},
                 "element": {
-                    "type": "plain_text_input",
-                    "action_id": "end_input"
+                    "type": "datepicker",
+                    "action_id": "end_input",
+                    "placeholder": {"type": "plain_text", "text": "Selecciona fecha"}
                 }
             },
             {
@@ -151,6 +153,22 @@ def build_editar_selector_modal(grouped_options: dict) -> dict[str, Any]:
 
 def build_editar_tarea_modal(task: dict) -> dict[str, Any]:
     """Genera dinámicamente el modal para editar una tarea."""
+    start_element = {
+        "type": "datepicker",
+        "action_id": "start_input",
+        "placeholder": {"type": "plain_text", "text": "Selecciona fecha"}
+    }
+    if task.get("start"):
+        start_element["initial_date"] = task.get("start")[:10]
+        
+    end_element = {
+        "type": "datepicker",
+        "action_id": "end_input",
+        "placeholder": {"type": "plain_text", "text": "Selecciona fecha"}
+    }
+    if task.get("end"):
+        end_element["initial_date"] = task.get("end")[:10]
+
     return {
         "type": "modal",
         "callback_id": "editar_tarea_submission",
@@ -186,22 +204,14 @@ def build_editar_tarea_modal(task: dict) -> dict[str, Any]:
             {
                 "type": "input",
                 "block_id": "start_block",
-                "label": {"type": "plain_text", "text": "Fecha Inicio (YYYY-MM-DD)"},
-                "element": {
-                    "type": "plain_text_input",
-                    "action_id": "start_input",
-                    "initial_value": task.get("start", "")
-                }
+                "label": {"type": "plain_text", "text": "Fecha Inicio"},
+                "element": start_element
             },
             {
                 "type": "input",
                 "block_id": "end_block",
-                "label": {"type": "plain_text", "text": "Fecha Fin Esperado (YYYY-MM-DD)"},
-                "element": {
-                    "type": "plain_text_input",
-                    "action_id": "end_input",
-                    "initial_value": task.get("end", "")
-                }
+                "label": {"type": "plain_text", "text": "Fecha Fin Esperado"},
+                "element": end_element
             },
             {
                 "type": "input",
@@ -313,4 +323,36 @@ def build_bitacora_completa_modal(bitacora: dict[str, Any]) -> dict[str, Any]:
         "title": {"type": "plain_text", "text": "Editar Bitácora"},
         "submit": {"type": "plain_text", "text": "Guardar Todo"},
         "blocks": blocks
+    }
+
+def build_avance_modal(tareas: list[dict[str, Any]]) -> dict[str, Any]:
+    if not tareas:
+        tareas = [{"text": {"type": "plain_text", "text": "No hay tareas activas"}, "value": "none"}]
+    return {
+        "type": "modal",
+        "callback_id": "avance_submission",
+        "title": {"type": "plain_text", "text": "Registrar Avance"},
+        "submit": {"type": "plain_text", "text": "Guardar"},
+        "blocks": [
+            {
+                "type": "input",
+                "block_id": "task_block",
+                "label": {"type": "plain_text", "text": "Selecciona la Tarea"},
+                "element": {
+                    "type": "static_select",
+                    "action_id": "task_input",
+                    "placeholder": {"type": "plain_text", "text": "Elige una tarea"},
+                    "options": tareas[:100]
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "progress_block",
+                "label": {"type": "plain_text", "text": "Porcentaje de Avance (0 a 100)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "progress_input"
+                }
+            }
+        ]
     }

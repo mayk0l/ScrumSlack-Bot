@@ -13,7 +13,8 @@ from src.interfaces.slack.template_loader import (
     build_crear_tarea_modal,
     build_editar_selector_modal,
     build_editar_tarea_modal,
-    build_bitacora_completa_modal
+    build_bitacora_completa_modal,
+    build_avance_modal
 )
 
 from src.application.standup_service import StandupService
@@ -68,8 +69,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             print(f"Error fetching user info: {e}")
             resp = f"<@{resp_id}>"
             
-        start = values["start_block"]["start_input"]["value"]
-        end = values["end_block"]["end_input"]["value"]
+        start = values["start_block"]["start_input"]["selected_date"]
+        end = values["end_block"]["end_input"]["selected_date"]
         
         entregable = ""
         if "entregable_block" in values and "entregable_input" in values["entregable_block"]:
@@ -151,8 +152,8 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 print(f"Error fetching user info: {e}")
                 resp = f"<@{resp_id}>"
                 
-            start = values["start_block"]["start_input"]["value"]
-            end = values["end_block"]["end_input"]["value"]
+            start = values["start_block"]["start_input"]["selected_date"]
+            end = values["end_block"]["end_input"]["selected_date"]
             
             entregable = ""
             if "entregable_block" in values and "entregable_input" in values["entregable_block"]:
@@ -195,3 +196,34 @@ def register_modals(app: AsyncApp, services: dict) -> None:
         # Optional notify
         # user_id = body["user"]["id"]
         # await client.chat_postMessage(channel=user_id, text="✅ Bitácora actualizada y estilos aplicados.")
+
+    @app.view("avance_submission")
+    async def handle_avance_submission(ack, body, view, client):
+        values = view["state"]["values"]
+        task_val = values["task_block"]["task_input"]["selected_option"]["value"]
+        if task_val == "none":
+            await ack(response_action="errors", errors={"task_block": "No hay tareas para reportar."})
+            return
+            
+        task_id = task_val.split("|")[1] if "|" in task_val else task_val
+        prog_str = values["progress_block"]["progress_input"]["value"]
+        
+        try:
+            progress = float(prog_str) / 100.0 if float(prog_str) > 1 else float(prog_str)
+        except ValueError:
+            await ack(response_action="errors", errors={"progress_block": "Debe ser un número (Ej. 50 o 0.5)"})
+            return
+            
+        await ack()
+        from src.container import get_container
+        container = get_container()
+        success = await container.valuelist_svc.update_task_progress(task_id, progress)
+        
+        user_id = body["user"]["id"]
+        if success:
+            await client.chat_postMessage(
+                channel=user_id, 
+                text=f"✅ ¡Avance de *{task_id}* actualizado a {progress*100:.0f}%!\nSi llegaste al 100%, recuerda reportar la URL usando `/evidencia {task_id} [URL]`"
+            )
+        else:
+            await client.chat_postMessage(channel=user_id, text=f"❌ No se pudo actualizar {task_id}.")
