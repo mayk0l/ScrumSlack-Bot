@@ -17,7 +17,7 @@ HEADERS_TASKS = [
     "Responsable",
     "Comienzo",
     "Fin (Esperado/logrado)",
-    "% logro esperado",
+    "Estado",
     "% de logro",
     "Entregable",
     "Comentarios",
@@ -188,3 +188,14 @@ async def test_generate_gantt(service):
     gantt = await service.generate_gantt()
     assert "gantt" in gantt
     assert "A1.1" in gantt
+
+
+@pytest.mark.asyncio
+async def test_estado_header_is_canonical(service, excel_path):
+    # Un write dispara _apply_gantt_and_styles, que reescribe los headers.
+    await service.create_task("OE1", "Otra", "Ana", "2026-06-10", "2026-06-12")
+    wb = openpyxl.load_workbook(excel_path)
+    ws = wb["Planificación"]
+    headers = [c.value for c in ws[1]]
+    assert headers[5] == "Estado"
+    assert headers[6] == "% de logro"

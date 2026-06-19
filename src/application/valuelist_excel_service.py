@@ -2,6 +2,68 @@ import asyncio
 import openpyxl
 from typing import Any
 
+# --- Esquema canónico de las hojas de tareas (Planificación / Administración) ---
+TASK_HEADERS = [
+    "Actividad",
+    "Descripción (resumen)",
+    "Responsable",
+    "Comienzo",
+    "Fin (Esperado/logrado)",
+    "Estado",
+    "% de logro",
+    "Entregable",
+    "Comentarios",
+]
+
+# Índices 0-based para iter_rows(values_only=True).
+(
+    IDX_ACTIVIDAD,
+    IDX_DESC,
+    IDX_RESP,
+    IDX_INICIO,
+    IDX_FIN,
+    IDX_ESTADO,
+    IDX_PROGRESO,
+    IDX_ENTREGABLE,
+    IDX_COMENT,
+) = range(9)
+
+# Estados válidos de una tarea (semáforo).
+STATUS_NOT_STARTED = "NO COMENZADO"
+STATUS_IN_PROGRESS = "EN CURSO"
+STATUS_DONE = "COMPLETADO"
+STATUS_BLOCKED = "BLOQUEADO"
+TASK_STATUSES = [STATUS_NOT_STARTED, STATUS_IN_PROGRESS, STATUS_DONE, STATUS_BLOCKED]
+
+
+def to_fraction(value: Any) -> float:
+    """Normaliza un porcentaje a fracción 0-1.
+
+    Acepta tanto fracciones (0.5) como porcentajes (50) y recorta al rango
+    [0, 1], de modo que la lectura sea robusta sin importar cómo el usuario
+    haya escrito el valor en el Excel.
+    """
+    try:
+        v = float(str(value).replace("%", "").strip())
+    except (TypeError, ValueError):
+        return 0.0
+    if v > 1:
+        v = v / 100.0
+    return max(0.0, min(1.0, v))
+
+
+def derive_status(progress: float, current: str = "") -> str:
+    """Deriva el Estado a partir del progreso, respetando BLOQUEADO manual."""
+    current_norm = str(current).strip().upper() if current else ""
+    if progress >= 1.0:
+        return STATUS_DONE
+    if current_norm == STATUS_BLOCKED:
+        return STATUS_BLOCKED
+    if progress > 0:
+        return STATUS_IN_PROGRESS
+    return STATUS_NOT_STARTED
+
+
 class ValuelistExcelService:
     """
     Servicio para sincronizar y leer datos directamente desde 
@@ -105,7 +167,7 @@ class ValuelistExcelService:
         align_left = xls.align_left()
         thin_border = xls.thin_border()
 
-        headers = ["Actividad", "Descripción (resumen)", "Responsable", "Comienzo", "Fin (Esperado/logrado)", "% logro esperado", "% de logro", "Entregable", "Comentarios"]
+        headers = TASK_HEADERS
         
         # 0. Format Bitácora (Executive Summary)
         if "Bitácora" in wb.sheetnames:
@@ -187,7 +249,7 @@ class ValuelistExcelService:
             # Cell formatting inside the table
             for row in ws.iter_rows(min_row=2, max_row=max_r, max_col=9):
                 for cell in row:
-                    if cell.column in (6, 7):
+                    if cell.column == IDX_PROGRESO + 1:
                         cell.number_format = '0%'
                     cell.alignment = align_left if cell.column in (2, 8, 9) else align_center
                     
@@ -525,8 +587,8 @@ class ValuelistExcelService:
                 ws.cell(row=last_row, column=3).value = resp
                 ws.cell(row=last_row, column=4).value = start_dt
                 ws.cell(row=last_row, column=5).value = end_dt
-                ws.cell(row=last_row, column=6).value = "NO COMENZADO"
-                ws.cell(row=last_row, column=7).value = 0.0
+                ws.cell(row=last_row, column=IDX_ESTADO + 1).value = STATUS_NOT_STARTED
+                ws.cell(row=last_row, column=IDX_PROGRESO + 1).value = 0.0
                 ws.cell(row=last_row, column=8).value = entregable
                 ws.cell(row=last_row, column=9).value = comentarios
                 self._apply_gantt_and_styles(wb)
