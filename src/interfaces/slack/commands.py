@@ -8,6 +8,7 @@ from __future__ import annotations
 from slack_bolt.async_app import AsyncApp
 
 from src.interfaces.slack.modals import build_standup_modal
+from src.interfaces.slack import presentation as pres
 from src.application.standup_service import StandupService
 from src.application.report_service import ReportService
 from src.application.risk_service import RiskService
@@ -64,11 +65,11 @@ def register_commands(app: AsyncApp, services: dict) -> None:
             "• `/avance [ID] [1-100]` -> Actualiza el progreso de una tarea (Ej. `/avance A1.1 50`).\n"
             "• `/evidencia [ID] [URL]` -> Sube el link de tu PR o documento al llegar al 100%.\n\n"
             "📊 *4. Reportes y Cierre*\n"
-            "• `/progreso` -> Revisa el porcentaje de avance global de cada módulo.\n"
+            "• `/progreso` -> Revisa el porcentaje de avance de cada objetivo.\n"
             "• `/reporte` -> Resumen automático del trabajo del equipo.\n"
             "• `/gantt` -> Visualiza el cronograma general.\n"
             "• `/descargar-excel` -> Baja la versión maestra y más reciente del Excel.\n\n"
-            "¡A darle con todo! 🦣🛠️\n\n"
+            "¿Dudas? Escríbeme por aquí cuando quieras. 🤖"
         )
         await say(ayuda_text)
 
@@ -96,11 +97,11 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         async with container.uow() as uow:
             risks = await uow.risk_svc.get_active_risks(default_team_id)
             if risks:
-                lines = [f"• [{r.severity.value}] {r.description}" for r in risks]
-                text = "⚠️ Riesgos activos:\n" + "\n".join(lines)
+                lines = [f"• {pres.severity_label(r.severity)} — {r.description}" for r in risks]
+                text = "*⚠️ Riesgos activos*\n" + "\n".join(lines)
             else:
-                text = "No hay riesgos activos. 🎉"
-        await say(f"{text}\n\n")
+                text = "✅ No hay riesgos activos."
+        await say(text)
 
     @app.command("/bloqueos")
     async def handle_bloqueos_command(ack, say):
@@ -119,7 +120,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 text = "🚫 *Bloqueos reportados hoy:*\n" + "\n".join(lines)
             else:
                 text = "No hay bloqueos reportados hoy. ✅"
-        await say(f"{text}\n\n")
+        await say(text)
 
     @app.command("/sprint")
     async def handle_sprint_command(ack, say):
@@ -137,7 +138,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 )
             else:
                 text = "No hay sprint activo actualmente."
-        await say(f"{text}\n\n")
+        await say(text)
 
     @app.command("/metricas")
     async def handle_metricas_command(ack, say):
@@ -155,7 +156,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
                 text = f"📊 *Métricas del sprint {sprint.name}:*\n" + "\n".join(lines)
             else:
                 text = f"📊 Sprint *{sprint.name}* activo pero sin métricas registradas aún."
-        await say(f"{text}\n\n")
+        await say(text)
 
     @app.command("/reporte")
     async def handle_reporte_command(ack, say, client, command):
@@ -323,7 +324,7 @@ def register_commands(app: AsyncApp, services: dict) -> None:
         if not text:
             text = "⚠️ No se pudo leer la Bitácora o está vacía."
             
-        await say(f"{text}\n\n")
+        await say(text)
 
     @app.command("/editar-bitacora")
     async def handle_editar_bitacora_command(ack, body, client):
