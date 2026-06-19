@@ -8,7 +8,15 @@ import openpyxl
 import pytest
 from datetime import datetime
 
-from src.application.valuelist_excel_service import ValuelistExcelService
+from src.application.valuelist_excel_service import (
+    ValuelistExcelService,
+    STATUS_NOT_STARTED,
+    STATUS_IN_PROGRESS,
+    STATUS_DONE,
+    STATUS_BLOCKED,
+    to_fraction,
+    derive_status,
+)
 
 # Esquema canónico de columnas de las hojas de tareas (Planificación / Administración).
 HEADERS_TASKS = [
@@ -106,6 +114,65 @@ async def test_update_task_progress(service, excel_path):
 @pytest.mark.asyncio
 async def test_update_task_progress_not_found(service):
     assert await service.update_task_progress("ZZZ", 0.5) is False
+
+
+def _read_task_row(excel_path, sheet, task_id):
+    wb = openpyxl.load_workbook(excel_path)
+    for row in wb[sheet].iter_rows(min_row=2, values_only=True):
+        if row[0] == task_id:
+            return row
+    return None
+
+
+@pytest.mark.asyncio
+async def test_update_progress_derives_status(service, excel_path):
+    await service.update_task_progress("A1.2", 0.5)
+    row = _read_task_row(excel_path, "Planificación", "A1.2")
+    assert row[5] == STATUS_IN_PROGRESS
+    assert row[6] == 0.5
+
+    await service.update_task_progress("A1.2", 1.0)
+    assert _read_task_row(excel_path, "Planificación", "A1.2")[5] == STATUS_DONE
+
+    await service.update_task_progress("A1.2", 0.0)
+    assert _read_task_row(excel_path, "Planificación", "A1.2")[5] == STATUS_NOT_STARTED
+
+
+@pytest.mark.asyncio
+async def test_update_progress_normalizes_percentage(service, excel_path):
+    # 50 (porcentaje) debe almacenarse como 0.5 (fracción).
+    await service.update_task_progress("A1.1", 50)
+    assert _read_task_row(excel_path, "Planificación", "A1.1")[6] == 0.5
+
+
+@pytest.mark.asyncio
+async def test_update_progress_preserves_blocked(service, excel_path):
+    wb = openpyxl.load_workbook(excel_path)
+    for r in wb["Planificación"].iter_rows(min_row=2):
+        if r[0].value == "A1.1":
+            r[5].value = STATUS_BLOCKED
+    wb.save(excel_path)
+
+    # Un avance parcial no debe quitar el bloqueo...
+    await service.update_task_progress("A1.1", 0.3)
+    assert _read_task_row(excel_path, "Planificación", "A1.1")[5] == STATUS_BLOCKED
+
+    # ...pero llegar al 100% sí lo completa.
+    await service.update_task_progress("A1.1", 1.0)
+    assert _read_task_row(excel_path, "Planificación", "A1.1")[5] == STATUS_DONE
+
+
+def test_to_fraction_and_derive_status():
+    assert to_fraction(50) == 0.5
+    assert to_fraction(0.5) == 0.5
+    assert to_fraction("75%") == 0.75
+    assert to_fraction(None) == 0.0
+    assert to_fraction(150) == 1.0
+    assert derive_status(0.0) == STATUS_NOT_STARTED
+    assert derive_status(0.4) == STATUS_IN_PROGRESS
+    assert derive_status(1.0) == STATUS_DONE
+    assert derive_status(0.4, STATUS_BLOCKED) == STATUS_BLOCKED
+    assert derive_status(1.0, STATUS_BLOCKED) == STATUS_DONE
 
 
 @pytest.mark.asyncio

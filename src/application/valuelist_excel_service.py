@@ -138,6 +138,12 @@ class ValuelistExcelService:
                                 except ValueError:
                                     return False, f"Formato de fecha inválido en la columna '{col_name}' para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx}. Debe ser YYYY-MM-DD o formato de fecha de Excel."
                     
+                    # Validar Estado (columna index 5)
+                    estado_val = row[IDX_ESTADO]
+                    if estado_val is not None and str(estado_val).strip():
+                        if str(estado_val).strip().upper() not in TASK_STATUSES:
+                            return False, f"Estado inválido '{estado_val}' para la tarea '{act_str}' en la pestaña '{sheet_name}', fila {row_idx}. Debe ser uno de: {', '.join(TASK_STATUSES)}."
+
                     # Validar % logro (columna index 6)
                     logro = row[6]
                     if logro is not None:
@@ -455,15 +461,16 @@ class ValuelistExcelService:
                         continue
                     ws = wb[sheet_name]
                     for row in ws.iter_rows(min_row=2, values_only=True):
-                        # Cols: 0=Act, 1=Desc, 2=Resp, 3=Inicio, 4=Fin, 5=%esp, 6=%logro
-                        act_id = row[0]
-                        resp = row[2]
-                        
+                        # Cols: 0=Act, 1=Desc, 2=Resp, 3=Inicio, 4=Fin, 5=Estado, 6=%logro
+                        act_id = row[IDX_ACTIVIDAD]
+                        resp = row[IDX_RESP]
+
                         if act_id and (str(act_id).startswith("A") or str(act_id).startswith("AD")) and resp == target_name:
                             tasks.append({
                                 "id": str(act_id),
-                                "desc": str(row[1]) if row[1] else "",
-                                "progress": float(row[6]) if row[6] is not None else 0.0
+                                "desc": str(row[IDX_DESC]) if row[IDX_DESC] else "",
+                                "progress": to_fraction(row[IDX_PROGRESO]),
+                                "estado": str(row[IDX_ESTADO]).strip() if row[IDX_ESTADO] else "",
                             })
                 return tasks
             except Exception:
@@ -504,15 +511,24 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def update_task_progress(self, task_id: str, progress: float) -> bool:
-        """Actualiza el porcentaje de logro de una tarea en Planificación o Administración."""
+        """Actualiza el % de logro de una tarea y autoderiva su Estado.
+
+        El progreso se normaliza a fracción 0-1 y el Estado se deriva del
+        progreso (respetando BLOQUEADO manual salvo que llegue al 100%).
+        """
+        fraction = to_fraction(progress)
+
         def _write() -> bool:
             try:
                 wb = openpyxl.load_workbook(self._excel_path)
                 for sheet_name in ["Planificación", "Administración"]:
                     ws = wb[sheet_name]
                     for row in ws.iter_rows(min_row=2):
-                        if row[0].value and str(row[0].value) == task_id:
-                            row[6].value = progress
+                        if row[IDX_ACTIVIDAD].value and str(row[IDX_ACTIVIDAD].value) == task_id:
+                            row[IDX_PROGRESO].value = fraction
+                            current_estado = row[IDX_ESTADO].value
+                            row[IDX_ESTADO].value = derive_status(fraction, current_estado)
+                            self._apply_gantt_and_styles(wb)
                             wb.save(self._excel_path)
                             return True
                 return False
