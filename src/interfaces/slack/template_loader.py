@@ -185,6 +185,15 @@ def build_crear_tarea_modal(oes: list[dict[str, str]] = None) -> dict[str, Any]:
         "submit": {"type": "plain_text", "text": "Guardar"},
         "blocks": [
             {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "💡 El ID de la tarea (ej. _A1.1_) se genera automáticamente según el objetivo. El estado inicial será *NO COMENZADO*.",
+                    }
+                ],
+            },
+            {
                 "type": "input",
                 "block_id": "oe_block",
                 "label": {"type": "plain_text", "text": "Objetivo Asociado"},
@@ -201,7 +210,8 @@ def build_crear_tarea_modal(oes: list[dict[str, str]] = None) -> dict[str, Any]:
                 "label": {"type": "plain_text", "text": "Descripción (resumen)"},
                 "element": {
                     "type": "plain_text_input",
-                    "action_id": "desc_input"
+                    "action_id": "desc_input",
+                    "placeholder": {"type": "plain_text", "text": "Ej: Implementar login con OAuth"}
                 }
             },
             {
@@ -482,7 +492,8 @@ def build_avance_modal(tareas: list[dict[str, Any]]) -> dict[str, Any]:
                 "label": {"type": "plain_text", "text": "Porcentaje de Avance (0 a 100)"},
                 "element": {
                     "type": "plain_text_input",
-                    "action_id": "progress_input"
+                    "action_id": "progress_input",
+                    "placeholder": {"type": "plain_text", "text": "Ej: 50"}
                 }
             }
         ]
@@ -618,6 +629,12 @@ def build_avance_individual_modal(task_id: str, current_progress: float = 0.0) -
                     "action_id": "progress_input",
                     "placeholder": {"type": "plain_text", "text": "Ej: 75"}
                 }
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {"type": "mrkdwn", "text": "Al llegar a *100%* la tarea se marca como *COMPLETADO* automáticamente."}
+                ]
             }
         ]
     }

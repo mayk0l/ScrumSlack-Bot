@@ -542,7 +542,7 @@
 | H.11 | Módulo de presentación Block Kit + helper de severidades | P1 | ✅ Done |
 | H.12 | Fix reporte diario (mrkdwn válido, nombres reales, sin duplicar) | P0 | ✅ Done |
 | H.13 | Estandarizar mensajes de todos los comandos | P1 | ✅ Done |
-| H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | 🔲 |
+| H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | ✅ Done |
 | H.15 | Programar jobs (riesgos/github) + notificaciones proactivas | P2 | 🔲 |
 | H.16 | Logging estructurado y manejo de errores | P2 | 🔲 |
 | H.17 | Cierre: suite verde, docs y kanban actualizados | P0 | 🔲 |

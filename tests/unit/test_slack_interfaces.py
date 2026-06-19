@@ -1,9 +1,16 @@
 """Módulo: test_slack_interfaces."""
 
+import json
+
 from slack_bolt.async_app import AsyncApp
 
 from src.interfaces.slack.bolt_app import register_handlers
 from src.interfaces.slack.modals import build_standup_modal
+from src.interfaces.slack.template_loader import (
+    build_crear_tarea_modal,
+    build_avance_modal,
+    build_avance_individual_modal,
+)
 
 
 def test_build_standup_modal_structure() -> None:
@@ -51,3 +58,25 @@ def test_register_handlers_does_not_raise() -> None:
     }
     register_handlers(app, services)
     assert app is not None
+
+
+def test_crear_tarea_modal_has_hint_and_placeholder() -> None:
+    modal = build_crear_tarea_modal([{"id": "OE1", "desc": "Objetivo"}])
+    blob = json.dumps(modal, ensure_ascii=False)
+    assert "se genera automáticamente" in blob
+    desc = next(b for b in modal["blocks"] if b.get("block_id") == "desc_block")
+    assert "placeholder" in desc["element"]
+
+
+def test_avance_individual_modal_notes_completion() -> None:
+    modal = build_avance_individual_modal("A1.1", 0.5)
+    blob = json.dumps(modal, ensure_ascii=False)
+    assert "100%" in blob
+    assert "COMPLETADO" in blob
+
+
+def test_avance_modal_input_has_placeholder() -> None:
+    options = [{"text": {"type": "plain_text", "text": "A1.1"}, "value": "tarea|A1.1"}]
+    modal = build_avance_modal(options)
+    prog = next(b for b in modal["blocks"] if b.get("block_id") == "progress_block")
+    assert "placeholder" in prog["element"]
