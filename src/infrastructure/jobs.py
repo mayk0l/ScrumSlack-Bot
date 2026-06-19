@@ -59,4 +59,11 @@ async def detect_risks() -> None:
     async with container.uow() as uow:
         teams = await uow.team_repo.get_all()
         for team in teams:
-            await uow.risk_svc.detect_risks(team.id)
+            new_risks = await uow.risk_svc.detect_risks(team.id)
+            # Notifica proactivamente solo los riesgos recién detectados.
+            if new_risks and team.standup_channel_id:
+                slack = AsyncWebClient(token=team.slack_bot_token)
+                notifier = SlackNotifier(slack)
+                service = NotificationService(notifier)
+                for risk in new_risks:
+                    await service.notify_risk(team.standup_channel_id, risk)

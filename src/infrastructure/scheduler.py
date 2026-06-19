@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 
 class SchedulerService:
@@ -30,6 +31,22 @@ class SchedulerService:
         self._scheduler.add_job(
             func,
             CronTrigger(hour=hour, minute=minute, timezone=timezone),
+            id=job_id,
+            replace_existing=True,
+            kwargs=kwargs,
+        )
+
+    def add_interval_job(
+        self,
+        func: Callable[..., Any],
+        minutes: int,
+        job_id: str,
+        **kwargs: Any,
+    ) -> None:
+        """Agrega un job periódico que se ejecuta cada `minutes` minutos."""
+        self._scheduler.add_job(
+            func,
+            IntervalTrigger(minutes=minutes),
             id=job_id,
             replace_existing=True,
             kwargs=kwargs,

@@ -43,6 +43,17 @@ async def test_scheduler_start_and_shutdown() -> None:
     assert not scheduler._scheduler.running
 
 
+def test_add_interval_job_creates_job(scheduler: SchedulerService) -> None:
+    """Agregar un job de intervalo lo registra en el scheduler."""
+    def dummy_job(**kwargs):
+        pass
+
+    scheduler.add_interval_job(dummy_job, minutes=30, job_id="github_sync")
+    job = scheduler._scheduler.get_job("github_sync")
+    assert job is not None
+    assert job.id == "github_sync"
+
+
 def test_remove_job(scheduler: SchedulerService) -> None:
     """Se puede remover un job por ID."""
     def dummy_job(**kwargs):

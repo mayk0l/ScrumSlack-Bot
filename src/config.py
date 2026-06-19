@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     summary_time: str = "17:00"
     timezone: str = "America/Santiago"
 
+    # Jobs periódicos (minutos; 0 desactiva)
+    github_sync_interval_minutes: int = 30
+    risk_detection_interval_minutes: int = 60
+
     # Excel
     excel_file_path: str = "project_tracking.xlsx"
 

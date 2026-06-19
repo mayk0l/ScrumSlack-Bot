@@ -110,6 +110,21 @@ async def lifespan(app: FastAPI):
             job_id="daily_summary",
         )
 
+    # Jobs periódicos: sincronización de GitHub y detección de riesgos.
+    if settings.github_default_org and settings.github_sync_interval_minutes > 0:
+        scheduler.add_interval_job(
+            sync_github,
+            minutes=settings.github_sync_interval_minutes,
+            job_id="github_sync",
+        )
+
+    if settings.risk_detection_interval_minutes > 0:
+        scheduler.add_interval_job(
+            detect_risks,
+            minutes=settings.risk_detection_interval_minutes,
+            job_id="risk_detection",
+        )
+
     scheduler.start()
 
     socket_mode_handler = None
