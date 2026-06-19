@@ -258,6 +258,17 @@ async def test_generate_gantt(service):
 
 
 @pytest.mark.asyncio
+async def test_get_objective_progress(service):
+    objectives = await service.get_objective_progress()
+    # Todas las tareas del fixture son A1.x → OE1.
+    oe1 = next(o for o in objectives if o["id"] == "OE1")
+    assert oe1["desc"] == "Primer objetivo"
+    assert oe1["total"] == 3
+    assert oe1["done"] == 1          # A1.3 está al 100%
+    assert abs(oe1["progress"] - 0.5) < 1e-9  # (0.5 + 0.0 + 1.0) / 3
+
+
+@pytest.mark.asyncio
 async def test_estado_header_is_canonical(service, excel_path):
     # Un write dispara _apply_gantt_and_styles, que reescribe los headers.
     await service.create_task("OE1", "Otra", "Ana", "2026-06-10", "2026-06-12")

@@ -232,20 +232,26 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     async def handle_progreso_command(ack, say):
         await ack()
         container = get_container()
-        async with container.uow() as uow:
-            try:
-                modules = await container.valuelist_svc.get_module_progress()
-                if modules:
-                    lines = [
-                        f"• *{m.get('name', 'N/A')}*: {m.get('progress', '0')}% — {m.get('status', 'N/A')}"
-                        for m in modules
-                    ]
-                    text = "📈 *Progreso de módulos:*\n" + "\n".join(lines)
-                else:
-                    text = "No hay módulos registrados en la planilla."
-            except FileNotFoundError:
-                text = "⚠️ Planilla Excel no encontrada. Ejecuta la creación del template primero."
-        await say(f"{text}\n\n")
+        try:
+            objectives = await container.valuelist_svc.get_objective_progress()
+        except FileNotFoundError:
+            await say("⚠️ No encuentro la planilla Excel del proyecto.")
+            return
+
+        if not objectives:
+            await say("Aún no hay objetivos ni tareas registrados en la planilla.")
+            return
+
+        lines = ["*📈 Progreso por objetivo*", ""]
+        for o in objectives:
+            filled = int(round(o["progress"] * 10))
+            bar = "█" * filled + "░" * (10 - filled)
+            desc = f" — {o['desc']}" if o["desc"] else ""
+            lines.append(
+                f"*{o['id']}*{desc}\n`{bar}` {o['progress'] * 100:.0f}%  "
+                f"({o['done']}/{o['total']} tareas)"
+            )
+        await say("\n".join(lines))
 
     @app.command("/mis-tareas")
     async def handle_mis_tareas_command(ack, body, client, say):

@@ -1,4 +1,5 @@
 import asyncio
+import re
 import openpyxl
 from typing import Any
 
@@ -993,6 +994,74 @@ class ValuelistExcelService:
                 return False
 
         return await asyncio.to_thread(_write)
+
+    async def get_objective_progress(self) -> list[dict[str, Any]]:
+        """Avance agregado por Objetivo Específico (y Administración).
+
+        Agrupa las tareas por su prefijo de OE (A1.x → OE1, AD.x →
+        Administración) y calcula avance promedio, total y completadas,
+        tomando la descripción del OE desde la Bitácora.
+        """
+        def _read() -> list[dict[str, Any]]:
+            from collections import defaultdict
+            try:
+                wb = openpyxl.load_workbook(self._excel_path, data_only=True)
+            except Exception:
+                return []
+
+            oe_desc: dict[str, str] = {}
+            if "Bitácora" in wb.sheetnames:
+                for row in wb["Bitácora"].iter_rows(min_row=2, values_only=True):
+                    if len(row) < 3 or not row[1]:
+                        continue
+                    key = str(row[1]).strip().upper()
+                    if key.startswith("OE"):
+                        oe_desc[key] = str(row[2]).strip() if row[2] else ""
+
+            groups: dict[str, dict[str, float]] = defaultdict(
+                lambda: {"total": 0, "done": 0, "sum": 0.0}
+            )
+
+            def _objective_key(act_id: Any) -> str:
+                s = str(act_id).strip()
+                if s.upper().startswith("AD"):
+                    return "Administración"
+                match = re.match(r"A(\d+)\.", s)
+                return f"OE{match.group(1)}" if match else "Otros"
+
+            for sheet_name in ["Planificación", "Administración"]:
+                if sheet_name not in wb.sheetnames:
+                    continue
+                for row in wb[sheet_name].iter_rows(min_row=2, values_only=True):
+                    if len(row) <= IDX_PROGRESO or not row[IDX_ACTIVIDAD]:
+                        continue
+                    key = _objective_key(row[IDX_ACTIVIDAD])
+                    progress = to_fraction(row[IDX_PROGRESO])
+                    bucket = groups[key]
+                    bucket["total"] += 1
+                    bucket["sum"] += progress
+                    if progress >= 1.0:
+                        bucket["done"] += 1
+
+            def _sort_key(k: str):
+                match = re.match(r"OE(\d+)", k)
+                return (0, int(match.group(1))) if match else (1, k)
+
+            result = []
+            for key in sorted(groups.keys(), key=_sort_key):
+                bucket = groups[key]
+                total = int(bucket["total"])
+                avg = bucket["sum"] / total if total else 0.0
+                result.append({
+                    "id": key,
+                    "desc": oe_desc.get(key, ""),
+                    "progress": avg,
+                    "total": total,
+                    "done": int(bucket["done"]),
+                })
+            return result
+
+        return await asyncio.to_thread(_read)
 
     async def get_all_active_tasks(self) -> dict[str, list[str]]:
         """Devuelve todas las tareas no completadas agrupadas por responsable."""

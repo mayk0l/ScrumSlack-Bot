@@ -536,7 +536,7 @@
 | H.5 | Excel: validación de datos (dropdown) y formato condicional semáforo | P1 | ✅ Done |
 | H.6 | Excel: porcentaje consistente (0-1) y autoderivación de Estado | P1 | ✅ Done |
 | H.7 | Excel: evidencia con hipervínculos + hoja Dashboard con KPIs | P1 | ✅ Done |
-| H.8 | Fix `/progreso` (método inexistente) | P0 | 🔲 |
+| H.8 | Fix `/progreso` (método inexistente) | P0 | ✅ Done |
 | H.9 | Fix `get_all_active_tasks` (umbral y display %) | P1 | 🔲 |
 | H.10 | Standup actualiza progreso + reporte une Excel y DB | P1 | 🔲 |
 | H.11 | Módulo de presentación Block Kit + helper de severidades | P1 | 🔲 |
