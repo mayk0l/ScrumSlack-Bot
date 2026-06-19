@@ -115,6 +115,38 @@ async def test_generate_daily_summary_includes_excel_progress():
     assert "Progreso del proyecto" in summary
     assert "OE1" in summary
 
+
+class FakeMemberRepo:
+    def __init__(self, members):
+        self._members = members
+
+    async def get_by_team(self, team_id):
+        return self._members
+
+
+@pytest.mark.asyncio
+async def test_daily_summary_uses_slack_mentions_and_valid_mrkdwn():
+    from src.domain.models import Member
+
+    mid = uuid4()
+    member = Member(team_id=uuid4(), slack_user_id="U999", display_name="U999", id=mid)
+    response = StandupResponse(
+        session_id=uuid4(), member_id=mid, yesterday="a", today="b", blockers=""
+    )
+    service = ReportService(
+        standup_service=FakeStandupService(responses=[response]),
+        github_service=FakeGitHubService(),
+        risk_service=FakeRiskService(),
+        member_repo=FakeMemberRepo([member]),
+    )
+    summary = await service.generate_daily_summary(uuid4(), "C1")
+    # Menciona al usuario en lugar de mostrar su UUID.
+    assert "<@U999>" in summary
+    assert str(mid) not in summary
+    # mrkdwn de Slack válido: sin encabezados '#' ni negrita '**'.
+    assert "##" not in summary
+    assert "**" not in summary
+
 @pytest.mark.asyncio
 async def test_generate_ai_summary_with_context():
     team_id = uuid4()

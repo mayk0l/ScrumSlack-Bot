@@ -540,7 +540,7 @@
 | H.9 | Fix `get_all_active_tasks` (umbral y display %) | P1 | ✅ Done |
 | H.10 | Standup actualiza progreso + reporte une Excel y DB | P1 | ✅ Done |
 | H.11 | Módulo de presentación Block Kit + helper de severidades | P1 | ✅ Done |
-| H.12 | Fix reporte diario (mrkdwn válido, nombres reales, sin duplicar) | P0 | 🔲 |
+| H.12 | Fix reporte diario (mrkdwn válido, nombres reales, sin duplicar) | P0 | ✅ Done |
 | H.13 | Estandarizar mensajes de todos los comandos | P1 | 🔲 |
 | H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | 🔲 |
 | H.15 | Programar jobs (riesgos/github) + notificaciones proactivas | P2 | 🔲 |

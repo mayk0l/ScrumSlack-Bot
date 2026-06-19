@@ -88,6 +88,7 @@ class Container:
                 self.risk_svc,
                 ai_client=container.ai_client,
                 valuelist_service=container.valuelist_svc,
+                member_repo=self.member_repo,
             )
             
             # Passthrough de singletons útiles
