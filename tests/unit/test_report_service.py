@@ -99,6 +99,22 @@ class FakeValuelistService:
     async def get_bitacora_summary(self):
         return {"og": "Terminar todo"}
 
+    async def get_objective_progress(self):
+        return [{"id": "OE1", "desc": "Primer objetivo", "progress": 0.5, "total": 2, "done": 1}]
+
+
+@pytest.mark.asyncio
+async def test_generate_daily_summary_includes_excel_progress():
+    service = ReportService(
+        standup_service=FakeStandupService(),
+        github_service=FakeGitHubService(),
+        risk_service=FakeRiskService(),
+        valuelist_service=FakeValuelistService(),
+    )
+    summary = await service.generate_daily_summary(uuid4(), "C1")
+    assert "Progreso del proyecto" in summary
+    assert "OE1" in summary
+
 @pytest.mark.asyncio
 async def test_generate_ai_summary_with_context():
     team_id = uuid4()

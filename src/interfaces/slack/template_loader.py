@@ -113,7 +113,29 @@ def build_standup_modal(tasks: list[dict[str, Any]] = None) -> dict[str, Any]:
             "optional": True
         }
     ])
-    
+
+    # Permite marcar tareas como completadas (100%) directamente desde el standup.
+    if tasks:
+        incomplete = [t for t in tasks if t.get("progress", 0.0) < 1.0]
+        if incomplete:
+            blocks.append({
+                "type": "input",
+                "block_id": "completed_block",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "✅ ¿Completaste alguna tarea hoy?"},
+                "element": {
+                    "type": "checkboxes",
+                    "action_id": "completed_input",
+                    "options": [
+                        {
+                            "text": {"type": "plain_text", "text": f"[{t['id']}] {t['desc'][:60]}"},
+                            "value": t["id"],
+                        }
+                        for t in incomplete[:10]
+                    ],
+                },
+            })
+
     return {
         "type": "modal",
         "callback_id": "standup_submission",

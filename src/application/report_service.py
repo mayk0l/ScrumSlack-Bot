@@ -85,6 +85,20 @@ class ReportService:
         else:
             lines.append("Nadie ha respondido aún.")
 
+        # Unión con la planificación (Excel): avance por objetivo.
+        if self._valuelist_service is not None:
+            objectives = await self._valuelist_service.get_objective_progress()
+            lines.append("")
+            lines.append("### 📈 Progreso del proyecto")
+            if objectives:
+                for obj in objectives:
+                    lines.append(
+                        f"- {obj['id']}: {obj['progress'] * 100:.0f}% "
+                        f"({obj['done']}/{obj['total']} tareas)"
+                    )
+            else:
+                lines.append("Sin tareas registradas en la planilla.")
+
         return "\n".join(lines)
 
     async def generate_ai_summary(

@@ -21,6 +21,20 @@ def test_build_standup_modal_structure() -> None:
     assert "blockers_block" in input_block_ids
 
 
+def test_build_standup_modal_with_tasks_has_completed_checkboxes() -> None:
+    """Con tareas activas, el modal ofrece marcar las completadas."""
+    tasks = [
+        {"id": "A1.1", "desc": "Backend", "progress": 0.5, "estado": "EN CURSO"},
+        {"id": "A1.2", "desc": "Ya lista", "progress": 1.0, "estado": "COMPLETADO"},
+    ]
+    modal = build_standup_modal(tasks)
+    completed = [b for b in modal["blocks"] if b.get("block_id") == "completed_block"]
+    assert len(completed) == 1
+    values = [o["value"] for o in completed[0]["element"]["options"]]
+    assert "A1.1" in values        # incompleta: se puede marcar
+    assert "A1.2" not in values    # ya completada: no se ofrece
+
+
 def test_register_handlers_does_not_raise() -> None:
     """El registro de handlers no lanza excepciones."""
     app = AsyncApp(token="xoxb-test", signing_secret="test")

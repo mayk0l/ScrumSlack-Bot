@@ -52,6 +52,15 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 slack_channel_id=channel_id,
             )
 
+        # Marca como completadas (100%) las tareas seleccionadas en el modal.
+        completed = (
+            values.get("completed_block", {})
+            .get("completed_input", {})
+            .get("selected_options", [])
+        )
+        for opt in completed:
+            await container.valuelist_svc.update_task_progress(opt["value"], 1.0)
+
     @app.view("crear_tarea_submission")
     async def handle_crear_tarea_submission(ack, body, view, client):
         await ack()
