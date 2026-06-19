@@ -278,3 +278,31 @@ async def test_estado_dropdown_and_conditional_formatting(service, excel_path):
     assert any("EN CURSO" in f and "BLOQUEADO" in f for f in formulas)
     # Semáforo: hay reglas de formato condicional aplicadas.
     assert len(list(ws.conditional_formatting)) >= 1
+
+
+@pytest.mark.asyncio
+async def test_evidence_is_hyperlink(service, excel_path):
+    await service.add_evidence("A1.1", "https://github.com/org/repo/pull/1")
+    wb = openpyxl.load_workbook(excel_path)
+    ws = wb["Evidencia"]
+    found = False
+    for row in ws.iter_rows(min_row=2):
+        if row[0].value == "A1.1":
+            assert row[2].hyperlink is not None
+            found = True
+    assert found
+
+
+@pytest.mark.asyncio
+async def test_dashboard_sheet_with_kpis(service, excel_path):
+    await service.update_task_progress("A1.1", 1.0)
+    wb = openpyxl.load_workbook(excel_path)
+    assert "Dashboard" in wb.sheetnames
+    texts = []
+    for row in wb["Dashboard"].iter_rows(values_only=True):
+        texts.extend(str(v) for v in row if v is not None)
+    joined = " ".join(texts)
+    assert "Avance global" in joined
+    assert "Total de tareas" in joined
+    assert "Próximas a vencer" in joined
+

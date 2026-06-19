@@ -323,7 +323,14 @@ class ValuelistExcelService:
             for row in ws_ev.iter_rows(min_row=2, max_row=max_ev_row, max_col=3):
                 for cell in row:
                     cell.alignment = align_left if cell.column in (2, 3) else align_center
-                    
+                link = row[2]
+                if link.value and str(link.value).startswith(("http://", "https://")):
+                    link.hyperlink = str(link.value)
+                    link.font = Font(color="0563C1", underline="single")
+
+        # 1.6 Dashboard con KPIs (vista de solo lectura).
+        ValuelistExcelService._build_dashboard(wb)
+
         # 2. Draw Gantt Chart
         tasks = []
         min_date = None
@@ -446,6 +453,120 @@ class ValuelistExcelService:
                 c_idx += 1
                 
             row_idx += 1
+
+    @staticmethod
+    def _build_dashboard(wb: openpyxl.Workbook) -> None:
+        """(Re)genera la hoja Dashboard con KPIs de solo lectura.
+
+        Une el estado de las tareas de planificación en una vista ejecutiva:
+        avance global, conteo por estado y tareas próximas a vencer.
+        """
+        from datetime import datetime, date, timedelta
+        from openpyxl.styles import Font
+        from src.infrastructure import excel_styles as xls
+
+        # 1. Recolectar tareas de las hojas de planificación.
+        tasks = []
+        for sheet_name in ["Planificación", "Administración"]:
+            if sheet_name not in wb.sheetnames:
+                continue
+            for row in wb[sheet_name].iter_rows(min_row=2, values_only=True):
+                if len(row) <= IDX_PROGRESO or not row[IDX_ACTIVIDAD]:
+                    continue
+                progress = to_fraction(row[IDX_PROGRESO])
+                estado_raw = str(row[IDX_ESTADO]).strip().upper() if row[IDX_ESTADO] else ""
+                estado = estado_raw if estado_raw in TASK_STATUSES else derive_status(progress)
+                tasks.append({
+                    "id": str(row[IDX_ACTIVIDAD]),
+                    "estado": estado,
+                    "progress": progress,
+                    "fin": row[IDX_FIN],
+                })
+
+        total = len(tasks)
+        counts = {s: 0 for s in TASK_STATUSES}
+        for t in tasks:
+            counts[t["estado"]] = counts.get(t["estado"], 0) + 1
+        avg = (sum(t["progress"] for t in tasks) / total) if total else 0.0
+
+        # 2. Próximas a vencer (7 días) y no completadas.
+        def _as_date(value):
+            if isinstance(value, datetime):
+                return value.date()
+            if isinstance(value, date):
+                return value
+            try:
+                return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                return None
+
+        horizon = date.today() + timedelta(days=7)
+        upcoming = [
+            (t["id"], d)
+            for t in tasks
+            if (d := _as_date(t["fin"])) is not None and d <= horizon and t["progress"] < 1.0
+        ]
+        upcoming.sort(key=lambda x: x[1])
+
+        # 3. (Re)crear la hoja, limpiando merges previos para evitar corrupción.
+        if "Dashboard" in wb.sheetnames:
+            ws = wb["Dashboard"]
+            for merged in list(ws.merged_cells.ranges):
+                ws.unmerge_cells(str(merged))
+            if ws.max_row:
+                ws.delete_rows(1, ws.max_row)
+            ws.row_dimensions.clear()
+        else:
+            ws = wb.create_sheet("Dashboard", 0)
+
+        ws.column_dimensions["A"].width = 30
+        ws.column_dimensions["B"].width = 16
+        ws.sheet_view.showGridLines = False
+
+        ws["A1"] = "📊 Dashboard del Proyecto"
+        ws.merge_cells("A1:B1")
+        title = ws["A1"]
+        title.fill = xls.header_fill()
+        title.font = xls.header_font()
+        title.alignment = xls.align_center()
+
+        kpis = [
+            ("Avance global", avg, "0%"),
+            ("Total de tareas", total, "0"),
+            ("✅ Completadas", counts.get(STATUS_DONE, 0), "0"),
+            ("🟡 En curso", counts.get(STATUS_IN_PROGRESS, 0), "0"),
+            ("⬜ No comenzadas", counts.get(STATUS_NOT_STARTED, 0), "0"),
+            ("🔴 Bloqueadas", counts.get(STATUS_BLOCKED, 0), "0"),
+        ]
+        r = 3
+        for label, value, fmt in kpis:
+            c_label = ws.cell(row=r, column=1, value=label)
+            c_label.font = Font(bold=True)
+            c_label.border = xls.thin_border()
+            c_value = ws.cell(row=r, column=2, value=value)
+            c_value.number_format = fmt
+            c_value.alignment = xls.align_center()
+            c_value.border = xls.thin_border()
+            r += 1
+
+        r += 1
+        head = ws.cell(row=r, column=1, value="⏰ Próximas a vencer (7 días)")
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+        head.fill = xls.header_fill()
+        head.font = xls.header_font()
+        head.alignment = xls.align_center()
+        r += 1
+        ws.cell(row=r, column=1, value="Tarea").font = Font(bold=True)
+        ws.cell(row=r, column=2, value="Vence").font = Font(bold=True)
+        r += 1
+        if upcoming:
+            for tid, due in upcoming:
+                ws.cell(row=r, column=1, value=tid)
+                ws.cell(row=r, column=2, value=due.strftime("%d/%m/%Y")).alignment = xls.align_center()
+                r += 1
+        else:
+            ws.cell(row=r, column=1, value="Sin tareas próximas a vencer 🎉")
+            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
 
     async def get_my_tasks(self, target_name: str) -> list[dict[str, Any]]:
         """Busca las tareas asignadas al usuario en Planificación y Administración."""
