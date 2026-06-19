@@ -109,6 +109,40 @@ class ValuelistExcelService:
 
         headers = ["Actividad", "Descripción (resumen)", "Responsable", "Comienzo", "Fin (Esperado/logrado)", "% logro esperado", "% de logro", "Entregable", "Comentarios"]
         
+        # 0. Format Bitácora (Executive Summary)
+        if "Bitácora" in wb.sheetnames:
+            ws_bit = wb["Bitácora"]
+            ws_bit.freeze_panes = "A2"
+            
+            # Style headers
+            for row in ws_bit.iter_rows(min_row=1, max_row=1):
+                for cell in row:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = align_center
+            
+            # Column widths
+            ws_bit.column_dimensions['A'].width = 8
+            ws_bit.column_dimensions['B'].width = 25
+            ws_bit.column_dimensions['C'].width = 70
+            
+            # Style data cells with alternating colors
+            og_fill = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
+            oe_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+            
+            for row in ws_bit.iter_rows(min_row=2):
+                field = str(row[1].value).strip().upper() if row[1].value else ""
+                if field == "OG":
+                    for cell in row:
+                        cell.fill = og_fill
+                        cell.font = Font(bold=True, size=11)
+                elif field.startswith("OE"):
+                    for cell in row:
+                        cell.fill = oe_fill
+                
+                row[1].alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+                row[2].alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+        
         # 1. Format Planificación and Administración
         for sheet_name in ["Planificación", "Administración"]:
             if sheet_name not in wb.sheetnames:

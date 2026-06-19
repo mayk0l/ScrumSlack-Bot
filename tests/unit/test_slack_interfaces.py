@@ -11,7 +11,14 @@ def test_build_standup_modal_structure() -> None:
     modal = build_standup_modal()
     assert modal["type"] == "modal"
     assert modal["callback_id"] == "standup_submission"
-    assert len(modal["blocks"]) == 3
+    # Verificamos los inputs esenciales en lugar de un conteo fijo de bloques,
+    # ya que el modal puede incluir bloques de contexto/divisores opcionales.
+    input_block_ids = [
+        b.get("block_id") for b in modal["blocks"] if b.get("type") == "input"
+    ]
+    assert "yesterday_block" in input_block_ids
+    assert "today_block" in input_block_ids
+    assert "blockers_block" in input_block_ids
 
 
 def test_register_handlers_does_not_raise() -> None:

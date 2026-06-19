@@ -22,9 +22,18 @@ def register_events(app: AsyncApp, services: dict) -> None:
     @app.action("standup_button_click")
     async def handle_standup_button(ack, body, client):
         await ack()
+        user_id = body["user"]["id"]
+        from src.container import get_container
+        container = get_container()
+        try:
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await container.valuelist_svc.get_my_tasks(real_name)
+        except Exception:
+            tasks = []
         await client.views_open(
             trigger_id=body["trigger_id"],
-            view=build_standup_modal(),
+            view=build_standup_modal(tasks),
         )
 
     @app.event("app_home_opened")
@@ -73,8 +82,17 @@ def register_events(app: AsyncApp, services: dict) -> None:
     @app.action("home_hacer_standup")
     async def handle_home_hacer_standup(ack, body, client):
         await ack()
+        user_id = body["user"]["id"]
+        from src.container import get_container
+        container = get_container()
+        try:
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await container.valuelist_svc.get_my_tasks(real_name)
+        except Exception:
+            tasks = []
         from src.interfaces.slack.template_loader import build_standup_modal
-        await client.views_open(trigger_id=body["trigger_id"], view=build_standup_modal())
+        await client.views_open(trigger_id=body["trigger_id"], view=build_standup_modal(tasks))
 
     @app.action("update_task_click")
     async def handle_update_task_click(ack, body, client):

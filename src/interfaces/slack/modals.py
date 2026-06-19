@@ -51,7 +51,6 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 blockers=blockers,
                 slack_channel_id=channel_id,
             )
-            await session.commit()
 
     @app.view("crear_tarea_submission")
     async def handle_crear_tarea_submission(ack, body, view, client):

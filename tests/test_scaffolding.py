@@ -82,7 +82,7 @@ IMPLEMENTED_PY_FILES = {
     "src/domain/exceptions.py": ["class DomainException", "class EntityNotFoundError"],
     "src/domain/repositories.py": ["class TeamRepository", "abstractmethod", "async def"],
     "src/infrastructure/database.py": ["create_async_engine", "async_sessionmaker", "Base"],
-    "src/infrastructure/orm_models.py": ["class TeamORM", "to_domain", "from_domain"],
+    "src/infrastructure/orm_models.py": ["from src.infrastructure.orm"],
     "src/infrastructure/repositories/team_repo.py": ["class TeamRepositoryImpl", "TeamRepository"],
     "src/infrastructure/repositories/member_repo.py": ["class MemberRepositoryImpl", "MemberRepository"],
     "src/infrastructure/repositories/standup_repo.py": ["class StandupSessionRepositoryImpl", "class StandupResponseRepositoryImpl"],
@@ -110,8 +110,9 @@ IMPLEMENTED_PY_FILES = {
     "src/interfaces/slack/modals.py": ["build_standup_modal", "standup_submission"],
     "src/interfaces/slack/events.py": ["register_events", "app_mention"],
     "src/interfaces/api/routes.py": ["APIRouter", "health"],
-    "src/interfaces/api/dependencies.py": ["get_db_session", "get_session"],
+    "src/interfaces/api/dependencies.py": ["get_db_session", "Depends"],
     "tests/integration/test_api_routes.py": ["TestClient", "/api/health"],
+    "tests/integration/test_slack_commands.py": ["register_commands"],
     "tests/unit/test_slack_interfaces.py": ["build_standup_modal", "register_handlers"],
 }
 

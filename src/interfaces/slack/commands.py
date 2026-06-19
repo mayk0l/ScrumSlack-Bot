@@ -75,10 +75,18 @@ def register_commands(app: AsyncApp, services: dict) -> None:
     @app.command("/scrum")
     async def handle_scrum_command(ack, body, client):
         await ack()
+        container = get_container()
+        user_id = body.get("user_id")
+        try:
+            user_info = await client.users_info(user=user_id)
+            real_name = user_info["user"].get("real_name") or user_info["user"].get("name")
+            tasks = await container.valuelist_svc.get_my_tasks(real_name)
+        except Exception:
+            tasks = []
         from src.interfaces.slack.modals import build_standup_modal
         await client.views_open(
             trigger_id=body["trigger_id"],
-            view=build_standup_modal(),
+            view=build_standup_modal(tasks),
         )
 
     @app.command("/riesgos")

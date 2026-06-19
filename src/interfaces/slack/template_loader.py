@@ -20,8 +20,117 @@ def _replace_placeholders(obj: Any, replacements: dict[str, str]) -> Any:
         return [_replace_placeholders(i, replacements) for i in obj]
     return obj
 
-def build_standup_modal() -> dict[str, Any]:
-    return load_template("standup_modal.json")
+def build_standup_modal(tasks: list[dict[str, Any]] = None) -> dict[str, Any]:
+    """Genera el modal de standup con un bloque de contexto que muestra las tareas activas del usuario."""
+    blocks = []
+    
+    yesterday_initial = ""
+    today_initial = ""
+    
+    if tasks:
+        task_lines = []
+        for t in tasks:
+            task_lines.append(f"• *[{t['id']}]* {t['desc']} (`{t.get('progress', 0.0)*100:.0f}%`)")
+        tasks_text = "\n".join(task_lines)
+        
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"💡 *Tus tareas activas hoy:*\n{tasks_text}\n\n_Úsalas como referencia para tu reporte._"
+            }
+        })
+        blocks.append({"type": "divider"})
+        
+        # Prefill: yesterday we worked on all active tasks or tasks we've modified
+        yesterday_initial = "Ayer estuve trabajando en:\n" + "\n".join([f"• [{t['id']}] {t['desc']} ({t.get('progress', 0.0)*100:.0f}%)" for t in tasks])
+        
+        # Today: we continue working on tasks that are not yet 100%
+        today_tasks = [t for t in tasks if t.get('progress', 0.0) < 1.0]
+        if today_tasks:
+            today_initial = "Hoy continuaré con:\n" + "\n".join([f"• [{t['id']}] {t['desc']}" for t in today_tasks])
+        else:
+            today_initial = "Hoy no tengo tareas pendientes asignadas."
+    else:
+        blocks.append({
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "💡 _No tienes tareas activas asignadas en el Excel hoy._"
+                }
+            ]
+        })
+        blocks.append({"type": "divider"})
+        
+    yesterday_element = {
+        "type": "plain_text_input",
+        "action_id": "yesterday_input",
+        "multiline": True
+    }
+    if yesterday_initial:
+        yesterday_element["initial_value"] = yesterday_initial
+        
+    today_element = {
+        "type": "plain_text_input",
+        "action_id": "today_input",
+        "multiline": True
+    }
+    if today_initial:
+        today_element["initial_value"] = today_initial
+
+    blocks.extend([
+        {
+            "type": "input",
+            "block_id": "yesterday_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Qué hiciste ayer?"
+            },
+            "element": yesterday_element
+        },
+        {
+            "type": "input",
+            "block_id": "today_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Qué harás hoy?"
+            },
+            "element": today_element
+        },
+        {
+            "type": "input",
+            "block_id": "blockers_block",
+            "label": {
+                "type": "plain_text",
+                "text": "¿Tienes bloqueos?"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "blockers_input",
+                "multiline": True
+            },
+            "optional": True
+        }
+    ])
+    
+    return {
+        "type": "modal",
+        "callback_id": "standup_submission",
+        "title": {
+            "type": "plain_text",
+            "text": "Daily Standup"
+        },
+        "submit": {
+            "type": "plain_text",
+            "text": "Enviar"
+        },
+        "close": {
+            "type": "plain_text",
+            "text": "Cancelar"
+        },
+        "blocks": blocks
+    }
 
 def build_crear_tarea_modal(oes: list[dict[str, str]] = None) -> dict[str, Any]:
     """Genera el modal de crear tarea dinámicamente con las opciones de OE."""

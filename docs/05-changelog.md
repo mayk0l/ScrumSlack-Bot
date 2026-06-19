@@ -1,5 +1,55 @@
 # Changelog y Corrección de Bugs
 
+## Fase G — Mejoras de Presentación para Stakeholders (2026-06-18)
+
+### Estilo Premium del Excel para Reportes Ejecutivos
+**Objetivo:** Mejorar la presentación visual de los archivos Excel generados por el bot para hacerlos más profesionales y fáciles de interpretar por stakeholders externos e internos.
+
+**Mejoras implementadas:**
+
+#### 1. Hoja de Riesgos (`excel_sync_service.py`)
+- ✅ **Colores por severidad**:
+  - 🟢 Low: Verde (#A9D08E)
+  - 🟡 Medium: Amarillo (#FFD966)
+  - 🟠 High: Naranja (#F4B084)
+  - 🔴 Critical: Rojo (#FF6B6B)
+- ✅ **Formato de fechas**: DD/MM/AAAA (formato Excel nativo)
+- ✅ **Estado visual**: ✅ Sí / ⚠️ No con emojis
+- ✅ **Tablas nativas** con filtros automáticos
+- ✅ **Text wrapping** en descripciones largas
+- ✅ **Actualización dinámica** del rango de tabla
+
+#### 2. Hoja de Métricas (`excel_sync_service.py`)
+- ✅ **Formato numérico** con 2 decimales
+- ✅ **Formato de fechas** DD/MM/AAAA
+- ✅ **Tabla nativa** con zebra stripes
+- ✅ **Alineación centrada** optimizada
+- ✅ **Rango dinámico** de tabla
+
+#### 3. Hoja de Bitácora (Resumen Ejecutivo) (`valuelist_excel_service.py`)
+- ✅ **Headers corporativos**: Azul oscuro (#1F4E78) con texto blanco
+- ✅ **Freeze panes** en fila 2
+- ✅ **Column widths** ajustados (ID: 8, Campo: 25, Descripción: 70)
+- ✅ **Colores diferenciados**:
+  - OG (Objetivo General): Gris (#E7E6E6) con negrita
+  - OE (Objetivos Específicos): Gris claro (#F2F2F2)
+- ✅ **Text wrapping** en columna de descripción
+
+**Impacto:**
+- Escaneo visual rápido de prioridades por color
+- Aspecto profesional con estilos corporativos nativos de Excel
+- Usabilidad mejorada con filtros y freeze panes
+- Trazabilidad visual con DataBars en porcentajes (ya existente desde Fase E)
+
+**Archivos modificados:**
+- `src/application/excel_sync_service.py`: Mejoras en `_setup_sheet()`, `sync_metrics()`, `sync_risks()`
+- `src/application/valuelist_excel_service.py`: Mejoras en `_apply_gantt_and_styles()` para Bitácora
+
+**Documentación:**
+- Nuevo archivo: `docs/mejoras-excel-stakeholders.md` con comparativa visual y checklist
+
+---
+
 ## Correcciones Fase A (Estabilización)
 
 ### 1. Error de Dependency Injection en `routes.py`

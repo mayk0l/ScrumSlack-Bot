@@ -520,6 +520,38 @@
 
 ## 🚧 In Progress
 
+### Fase H — Pulido y Valor Real (Iniciativa de calidad)
+
+> Objetivo: conectar Excel ↔ comandos ↔ DB, pulir mensajes y modales, y
+> convertirlo en un bot que aporte valor real al equipo. Cada feature pasa
+> tests antes de un commit atómico. El push lo realiza el dueño.
+
+| ID | Tarea | Prioridad | Estado |
+|----|-------|-----------|--------|
+| H.0 | Baseline de tests verde + migración inicial versionada | P0 | ✅ Done |
+| H.1 | ADR: fuente de verdad (Excel=planificación, DB=actividad) | P0 | 🔲 |
+| H.2 | Eliminar `ExcelSyncService` huérfano; estilos a módulo compartido | P0 | 🔲 |
+| H.3 | Limpieza de repo y docs engañosas | P1 | 🔲 |
+| H.4 | Excel: columna Estado + esquema canónico + estilos centralizados | P0 | 🔲 |
+| H.5 | Excel: validación de datos (dropdown) y formato condicional semáforo | P1 | 🔲 |
+| H.6 | Excel: porcentaje consistente (0-1) y autoderivación de Estado | P1 | 🔲 |
+| H.7 | Excel: evidencia con hipervínculos + hoja Dashboard con KPIs | P1 | 🔲 |
+| H.8 | Fix `/progreso` (método inexistente) | P0 | 🔲 |
+| H.9 | Fix `get_all_active_tasks` (umbral y display %) | P1 | 🔲 |
+| H.10 | Standup actualiza progreso + reporte une Excel y DB | P1 | 🔲 |
+| H.11 | Módulo de presentación Block Kit + helper de severidades | P1 | 🔲 |
+| H.12 | Fix reporte diario (mrkdwn válido, nombres reales, sin duplicar) | P0 | 🔲 |
+| H.13 | Estandarizar mensajes de todos los comandos | P1 | 🔲 |
+| H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | 🔲 |
+| H.15 | Programar jobs (riesgos/github) + notificaciones proactivas | P2 | 🔲 |
+| H.16 | Logging estructurado y manejo de errores | P2 | 🔲 |
+| H.17 | Cierre: suite verde, docs y kanban actualizados | P0 | 🔲 |
+
+**Notas H.0:** Suite verde en contenedor (`221 passed, 2 skipped`). Se reescribió
+`tests/unit/test_valuelist_excel_service.py` con archivos `.xlsx` reales (los mocks
+usaban un argumento `user_mapping` y un método `update_bitacora` ya inexistentes).
+Se versionó la migración inicial (`24a4b5857e1c_initial_schema`) y se selló la BD de dev.
+
 ### Fase E — Mejoras Premium y UX
 #### E.1 — Estética Premium del Excel (Tablas, DataBars, Freeze Panes)
 - **ID:** `E.1`
