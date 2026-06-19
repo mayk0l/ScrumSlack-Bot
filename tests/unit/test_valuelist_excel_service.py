@@ -248,6 +248,10 @@ async def test_get_all_active_tasks_groups_by_responsible(service):
     assert "Ana" in grouped
     assert "Beto" in grouped
     assert any("A1.1" in line for line in grouped["Ana"])
+    # A1.3 está al 100% → no debe listarse como activa.
+    assert not any("A1.3" in line for line in grouped.get("Ana", []))
+    # El progreso se muestra como porcentaje, no como fracción cruda.
+    assert any("50%" in line for line in grouped["Ana"])
 
 
 @pytest.mark.asyncio

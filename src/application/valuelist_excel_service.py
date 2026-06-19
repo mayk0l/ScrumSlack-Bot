@@ -1064,30 +1064,32 @@ class ValuelistExcelService:
         return await asyncio.to_thread(_read)
 
     async def get_all_active_tasks(self) -> dict[str, list[str]]:
-        """Devuelve todas las tareas no completadas agrupadas por responsable."""
+        """Devuelve las tareas no completadas agrupadas por responsable."""
         def _read() -> dict[str, list[str]]:
             from collections import defaultdict
             grouped = defaultdict(list)
             try:
                 wb = openpyxl.load_workbook(self._excel_path, data_only=True)
-                
+
                 for sheet_name in ["Planificación", "Administración"]:
+                    if sheet_name not in wb.sheetnames:
+                        continue
                     ws = wb[sheet_name]
                     for row in ws.iter_rows(min_row=2, values_only=True):
-                        act_id = row[0]
-                        if not act_id: continue
-                        
-                        resp = str(row[2]).strip() if row[2] else "Sin asignar"
-                        prog_str = str(row[6]).replace("%", "").strip() if row[6] else "0"
-                        
-                        try:
-                            prog = float(prog_str)
-                        except ValueError:
-                            prog = 0.0
-                            
-                        if prog < 100:
-                            grouped[resp].append(f"• *{act_id}*: {row[1]} (Progreso: {row[6] or '0%'})")
-                            
+                        if len(row) <= IDX_PROGRESO or not row[IDX_ACTIVIDAD]:
+                            continue
+
+                        act_id = row[IDX_ACTIVIDAD]
+                        resp = str(row[IDX_RESP]).strip() if row[IDX_RESP] else "Sin asignar"
+                        progress = to_fraction(row[IDX_PROGRESO])
+
+                        # El progreso se guarda como fracción 0-1; 1.0 = completada.
+                        if progress >= 1.0:
+                            continue
+
+                        desc = row[IDX_DESC] or ""
+                        grouped[resp].append(f"• *{act_id}*: {desc} ({progress * 100:.0f}%)")
+
                 return dict(grouped)
             except Exception:
                 return {}
