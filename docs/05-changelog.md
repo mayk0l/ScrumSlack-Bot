@@ -1,5 +1,29 @@
 # Changelog y Corrección de Bugs
 
+## Fase H — Pulido y Conexión Real (2026-06-19)
+
+Iniciativa para convertir el MVP en un bot que aporte valor real: conectar el
+Excel con los comandos y la base de datos, pulir mensajes y modales, y mejorar
+la robustez. Cada feature pasa la suite de tests antes de un commit atómico.
+
+### Fase 0 — Base limpia
+- **Baseline de tests verde** (220 passed, 2 skipped) realineando tests
+  obsoletos: `test_valuelist_excel_service` reescrito con archivos `.xlsx`
+  reales, y aserciones frágiles de modales/comandos/scaffolding actualizadas.
+- **Migración inicial versionada** (`24a4b5857e1c_initial_schema`); antes el
+  esquema solo existía vía `create_all`.
+- **Fuente de verdad definida** (ADR #5) y **`ExcelSyncService` eliminado**
+  (ADR #6). Sus estilos reutilizables se movieron a
+  `src/infrastructure/excel_styles.py`.
+  > **Corrección a Fase G:** el estilizado "para stakeholders" descrito abajo se
+  > había aplicado a `excel_sync_service.py`, un servicio huérfano que no
+  > afectaba el archivo real que descarga el equipo. El estilizado efectivo vive
+  > en `ValuelistExcelService` y ahora consume el módulo compartido de estilos.
+- **Limpieza de repo**: `.DS_Store` ignorado y desindexado, `fix_responsables.py`
+  movido a `scripts/`, y artefactos de prueba sueltos eliminados.
+
+---
+
 ## Fase G — Mejoras de Presentación para Stakeholders (2026-06-18)
 
 ### Estilo Premium del Excel para Reportes Ejecutivos

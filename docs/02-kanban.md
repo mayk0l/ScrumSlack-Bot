@@ -531,7 +531,7 @@
 | H.0 | Baseline de tests verde + migración inicial versionada | P0 | ✅ Done |
 | H.1 | ADR: fuente de verdad (Excel=planificación, DB=actividad) | P0 | ✅ Done |
 | H.2 | Eliminar `ExcelSyncService` huérfano; estilos a módulo compartido | P0 | ✅ Done |
-| H.3 | Limpieza de repo y docs engañosas | P1 | 🔲 |
+| H.3 | Limpieza de repo y docs engañosas | P1 | ✅ Done |
 | H.4 | Excel: columna Estado + esquema canónico + estilos centralizados | P0 | 🔲 |
 | H.5 | Excel: validación de datos (dropdown) y formato condicional semáforo | P1 | 🔲 |
 | H.6 | Excel: porcentaje consistente (0-1) y autoderivación de Estado | P1 | 🔲 |
