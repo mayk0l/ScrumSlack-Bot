@@ -59,6 +59,91 @@ Más detalles en [`docs/00-especificacion-completa.md`](docs/00-especificacion-c
 
 ---
 
+## Instalación en Slack (para desarrolladores)
+
+El bot funciona con **Socket Mode** (no necesitas exponer una URL pública). La forma
+más rápida de crear la app de Slack con todos los comandos, scopes y eventos es con
+el **App Manifest**:
+
+### 1. Crear la app desde el manifiesto
+
+1. Ve a [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest**.
+2. Elige tu workspace y pega este manifiesto (YAML):
+
+```yaml
+display_information:
+  name: Scrum Master Bot
+  description: Asistente Scrum que automatiza dailies, reportes y seguimiento en Excel.
+  background_color: "#1f4e78"
+features:
+  bot_user:
+    display_name: scrum-bot
+    always_online: true
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  slash_commands:
+    - { command: /scrum, description: Abre el modal de daily standup }
+    - { command: /mis-tareas, description: Tus tareas activas }
+    - { command: /todas-las-tareas, description: Tareas activas por responsable }
+    - { command: /crear-tarea, description: Crea una tarea (modal) }
+    - { command: /editar, description: Edita o elimina una tarea }
+    - { command: /avance, description: "Actualiza el % de una tarea", usage_hint: "[ID] [0-100]" }
+    - { command: /evidencia, description: "Adjunta un enlace de evidencia", usage_hint: "[ID] [URL]" }
+    - { command: /progreso, description: Avance por objetivo }
+    - { command: /gantt, description: Cronograma en Mermaid }
+    - { command: /bitacora, description: Proyecto, objetivo general y específicos }
+    - { command: /editar-bitacora, description: Edita la bitácora (modal) }
+    - { command: /descargar-excel, description: Descarga la última versión del Excel }
+    - { command: /riesgos, description: Riesgos activos }
+    - { command: /bloqueos, description: Bloqueos reportados hoy }
+    - { command: /sprint, description: Información del sprint activo }
+    - { command: /metricas, description: Métricas del sprint }
+    - { command: /reporte, description: Reporte diario con IA }
+    - { command: /github, description: Sincroniza Pull Requests }
+    - { command: /set-canal-reportes, description: Define el canal de reportes }
+    - { command: /ayuda-scrum, description: Guía rápida de uso }
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - chat:write
+      - commands
+      - files:read
+      - files:write
+      - im:history
+      - users:read
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_home_opened
+      - app_mention
+      - message.im
+  interactivity:
+    is_enabled: true
+  socket_mode_enabled: true
+  org_deploy_enabled: false
+  token_rotation_enabled: false
+```
+
+### 2. Generar tokens
+
+- **Socket Mode token (`xapp-...`):** *Basic Information* → *App-Level Tokens* → *Generate Token* con el scope `connections:write`. Va en `SLACK_APP_TOKEN`.
+- **Bot token (`xoxb-...`):** *OAuth & Permissions* → *Install to Workspace*. Copia el *Bot User OAuth Token* en `SLACK_BOT_TOKEN`.
+- **Signing secret:** *Basic Information* → *App Credentials* → *Signing Secret* en `SLACK_SIGNING_SECRET`.
+
+### 3. Invitar el bot y configurar el canal
+
+1. En el canal de tu equipo: `/invite @scrum-bot`.
+2. Ejecuta `/set-canal-reportes` en ese canal para que reciba los reportes automáticos.
+3. Para sincronizar el Excel manualmente, envíaselo por **mensaje directo** (DM) al bot.
+
+> El bot detecta el `SLACK_APP_TOKEN` (`xapp-...`) y abre la conexión Socket Mode
+> automáticamente al arrancar; no necesitas Request URLs ni túnel.
+
+---
+
 ## Primeros Pasos
 
 ### 1. Clonar y configurar
