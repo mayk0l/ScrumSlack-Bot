@@ -114,34 +114,61 @@ docker compose exec app pytest -q
 python -m pytest tests/test_infrastructure.py -q
 ```
 
-**Estado actual:** 204 passed, 2 skipped. Los 2 skipped requieren Docker CLI y se ejecutan en el host.
+**Estado actual:** 240 passed, 2 skipped. Los 2 skipped requieren Docker CLI y se ejecutan en el host.
 
 ---
 
-## Comandos de Slack (MVP)
+## Comandos de Slack
+
+**Planificación (Excel)**
 
 | Comando | Descripción |
 |---------|-------------|
-| `/scrum` | Abre el modal para enviar la actualización de standup. |
-| `/riesgos` | Muestra los riesgos activos del equipo. |
-| `/bloqueos` | Muestra bloqueos reportados hoy. |
+| `/bitacora` | Muestra proyecto, objetivo general y objetivos específicos. |
+| `/editar-bitacora` | Edita la bitácora (proyecto, OG, OEs) desde un modal. |
+| `/crear-tarea` | Crea una tarea (ID autogenerado, estado inicial NO COMENZADO). |
+| `/editar` | Edita o elimina una tarea existente. |
+| `/avance [ID] [0-100]` | Actualiza el % de una tarea (deriva el Estado). |
+| `/evidencia [ID] [URL]` | Adjunta un enlace de evidencia (queda como hipervínculo). |
+| `/mis-tareas` | Tus tareas activas con botón para actualizar. |
+| `/todas-las-tareas` | Tareas activas agrupadas por responsable. |
+| `/progreso` | Avance por objetivo (OE) con barra de progreso. |
+| `/gantt` | Cronograma en formato Mermaid. |
+| `/descargar-excel` | Descarga la última versión del Excel. |
+
+**Actividad del equipo (DB)**
+
+| Comando | Descripción |
+|---------|-------------|
+| `/scrum` | Abre el modal de daily standup (permite marcar tareas completadas). |
+| `/riesgos` | Riesgos activos con severidad (🟢 BAJA … 🔴 CRÍTICA). |
+| `/bloqueos` | Bloqueos reportados hoy. |
 | `/sprint` | Información del sprint activo. |
 | `/metricas` | Métricas del sprint. |
-| `/reporte` | Genera el reporte completo del día. |
-| `/progreso` | Progreso de módulos desde Excel. |
+| `/reporte` | Reporte diario (standups + PRs + riesgos + progreso del Excel). |
+| `/github` | Sincroniza Pull Requests desde GitHub. |
+| `/set-canal-reportes` | Define el canal de reportes automáticos. |
+| `/ayuda-scrum` | Guía rápida de uso. |
+
+> El Excel (`project_tracking.xlsx`) es la fuente de verdad de la planificación
+> (hojas `Dashboard`, `Bitácora`, `Planificación`, `Administración`, `Evidencia`,
+> `Gantt`); la base de datos lo es de la actividad diaria. Ver
+> [`docs/04-decisiones-de-arquitectura.md`](docs/04-decisiones-de-arquitectura.md).
 
 ---
 
 ## Jobs Programados
 
-El `SchedulerService` ejecuta los siguientes jobs diarios:
+El `SchedulerService` ejecuta:
 
-| Job | Hora | Descripción |
-|-----|------|-------------|
-| Recordatorio standup | `STANDUP_TIME` (default 09:00) | Envía mensaje con botón "Responder Standup". |
-| Resumen diario | `SUMMARY_TIME` (default 17:00) | Genera y envía el reporte del día. |
+| Job | Frecuencia | Descripción |
+|-----|------------|-------------|
+| Recordatorio standup | diario `STANDUP_TIME` (09:00) | Envía mensaje con botón "Responder Standup". |
+| Resumen diario | diario `SUMMARY_TIME` (17:00) | Genera y envía el reporte del día. |
+| Sync de GitHub | cada `GITHUB_SYNC_INTERVAL_MINUTES` (30) | Sincroniza Pull Requests (si hay `GITHUB_DEFAULT_ORG`). |
+| Detección de riesgos | cada `RISK_DETECTION_INTERVAL_MINUTES` (60) | Detecta riesgos nuevos y los notifica al canal. |
 
-Además, se pueden agregar jobs periódicos para sync de GitHub y detección de riesgos.
+> Los intervalos se pueden desactivar poniendo su valor en `0`.
 
 ---
 

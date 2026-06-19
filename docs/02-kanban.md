@@ -545,12 +545,19 @@
 | H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | ✅ Done |
 | H.15 | Programar jobs (riesgos/github) + notificaciones proactivas | P2 | ✅ Done |
 | H.16 | Logging estructurado y manejo de errores | P2 | ✅ Done |
-| H.17 | Cierre: suite verde, docs y kanban actualizados | P0 | 🔲 |
+| H.17 | Cierre: suite verde, docs y kanban actualizados | P0 | ✅ Done |
 
 **Notas H.0:** Suite verde en contenedor (`221 passed, 2 skipped`). Se reescribió
 `tests/unit/test_valuelist_excel_service.py` con archivos `.xlsx` reales (los mocks
 usaban un argumento `user_mapping` y un método `update_bitacora` ya inexistentes).
 Se versionó la migración inicial (`24a4b5857e1c_initial_schema`) y se selló la BD de dev.
+
+**Cierre Fase H:** Iniciativa completa. Suite final: `240 passed, 2 skipped`. Excel
+conectado con comandos/DB (columna Estado real con dropdown y semáforo, % consistente,
+Dashboard con KPIs, evidencia con hipervínculos), mensajes en mrkdwn válido de Slack con
+menciones reales y severidades unificadas, modales con hints, y jobs de GitHub/riesgos
+programados con notificación proactiva. `ExcelSyncService` huérfano eliminado. Falta solo
+`git push` (lo realiza el dueño).
 
 ### Fase E — Mejoras Premium y UX
 #### E.1 — Estética Premium del Excel (Tablas, DataBars, Freeze Panes)
