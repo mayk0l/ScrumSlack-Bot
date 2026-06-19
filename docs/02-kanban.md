@@ -529,7 +529,7 @@
 | ID | Tarea | Prioridad | Estado |
 |----|-------|-----------|--------|
 | H.0 | Baseline de tests verde + migración inicial versionada | P0 | ✅ Done |
-| H.1 | ADR: fuente de verdad (Excel=planificación, DB=actividad) | P0 | 🔲 |
+| H.1 | ADR: fuente de verdad (Excel=planificación, DB=actividad) | P0 | ✅ Done |
 | H.2 | Eliminar `ExcelSyncService` huérfano; estilos a módulo compartido | P0 | 🔲 |
 | H.3 | Limpieza de repo y docs engañosas | P1 | 🔲 |
 | H.4 | Excel: columna Estado + esquema canónico + estilos centralizados | P0 | 🔲 |
