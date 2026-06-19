@@ -544,7 +544,7 @@
 | H.13 | Estandarizar mensajes de todos los comandos | P1 | ✅ Done |
 | H.14 | Modales más intuitivos (crear/editar/standup/avance) | P1 | ✅ Done |
 | H.15 | Programar jobs (riesgos/github) + notificaciones proactivas | P2 | ✅ Done |
-| H.16 | Logging estructurado y manejo de errores | P2 | 🔲 |
+| H.16 | Logging estructurado y manejo de errores | P2 | ✅ Done |
 | H.17 | Cierre: suite verde, docs y kanban actualizados | P0 | 🔲 |
 
 **Notas H.0:** Suite verde en contenedor (`221 passed, 2 skipped`). Se reescribió

@@ -7,6 +7,10 @@ from __future__ import annotations
 
 from slack_bolt.async_app import AsyncApp
 
+import structlog
+
+log = structlog.get_logger(__name__)
+
 
 from src.interfaces.slack.template_loader import (
     build_standup_modal,
@@ -74,7 +78,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             resp = user_info["user"].get("real_name") or user_info["user"].get("name")
         except Exception as e:
             # Fallback if users:read scope is missing
-            print(f"Error fetching user info: {e}")
+            log.warning("error_fetching_user_info", error=str(e))
             resp = f"<@{resp_id}>"
             
         start = values["start_block"]["start_input"]["selected_date"]
@@ -106,7 +110,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             view = build_app_home(proyecto, tasks)
             await client.views_publish(user_id=user_id, view=view)
         except Exception as e:
-            print(f"Error refreshing app home: {e}")
+            log.warning("error_refreshing_app_home", error=str(e))
 
     @app.view("editar_selector_submission")
     async def handle_editar_selector_submission(ack, body, view):
@@ -167,7 +171,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 user_info = await client.users_info(user=resp_id)
                 resp = user_info["user"].get("real_name") or user_info["user"].get("name")
             except Exception as e:
-                print(f"Error fetching user info: {e}")
+                log.warning("error_fetching_user_info", error=str(e))
                 resp = f"<@{resp_id}>"
                 
             start = values["start_block"]["start_input"]["selected_date"]
@@ -196,7 +200,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
             view = build_app_home(proyecto, tasks)
             await client.views_publish(user_id=user_id, view=view)
         except Exception as e:
-            print(f"Error refreshing app home: {e}")
+            log.warning("error_refreshing_app_home", error=str(e))
 
     @app.view("bitacora_completa_submission")
     async def handle_bitacora_completa_submission(ack, body, view, client):
@@ -269,7 +273,7 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 view = build_app_home(proyecto, tasks)
                 await client.views_publish(user_id=user_id, view=view)
             except Exception as e:
-                print(f"Error refreshing app home: {e}")
+                log.warning("error_refreshing_app_home", error=str(e))
         else:
             await client.chat_postMessage(channel=user_id, text=f"❌ No se pudo actualizar {task_id}.")
 
@@ -307,6 +311,6 @@ def register_modals(app: AsyncApp, services: dict) -> None:
                 view = build_app_home(proyecto, tasks)
                 await client.views_publish(user_id=user_id, view=view)
             except Exception as e:
-                print(f"Error refreshing app home: {e}")
+                log.warning("error_refreshing_app_home", error=str(e))
         else:
             await client.chat_postMessage(channel=user_id, text=f"❌ No se pudo actualizar {task_id}.")

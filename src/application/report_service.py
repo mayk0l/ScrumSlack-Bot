@@ -13,6 +13,10 @@ from src.application.risk_service import RiskService
 from src.application.standup_service import StandupService
 from src.infrastructure.ai_client import AIClient
 
+import structlog
+
+log = structlog.get_logger(__name__)
+
 # Severidad → etiqueta de Slack (emoji + español). Se mantiene local para no
 # acoplar la capa de aplicación con la de presentación de Slack.
 _SEVERITY_ES = {
@@ -152,5 +156,5 @@ class ReportService:
             )
             return f"{summary}\n\n———\n*🤖 Análisis del Scrum Master (IA)*\n\n{analysis}"
         except Exception as e:
-            print(f"⚠️ Error generando resumen con IA: {e}", flush=True)
+            log.warning("ai_summary_failed", error=str(e))
             return summary

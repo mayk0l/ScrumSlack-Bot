@@ -11,6 +11,13 @@ from uuid import UUID
 from fastapi import FastAPI, Request
 
 from src.config import settings
+from src.logging_config import setup_logging
+
+setup_logging(
+    level="DEBUG" if settings.app_debug else "INFO",
+    json_logs=(settings.app_env == "production"),
+)
+
 from src.infrastructure.database import close_db, init_db
 from src.infrastructure.github_client import GitHubClient
 from src.infrastructure.repositories.member_repo import MemberRepositoryImpl

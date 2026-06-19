@@ -1,7 +1,10 @@
 import asyncio
 import re
 import openpyxl
+import structlog
 from typing import Any
+
+log = structlog.get_logger(__name__)
 
 # --- Esquema canónico de las hojas de tareas (Planificación / Administración) ---
 TASK_HEADERS = [
@@ -655,6 +658,7 @@ class ValuelistExcelService:
                             return True
                 return False
             except Exception:
+                log.exception("excel_write_failed")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -693,6 +697,7 @@ class ValuelistExcelService:
                 wb.save(self._excel_path)
                 return True
             except Exception:
+                log.exception("excel_write_failed")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -757,7 +762,7 @@ class ValuelistExcelService:
                 wb.save(self._excel_path)
                 return True
             except Exception as e:
-                print(f"Error create_task: {e}")
+                log.exception("error_create_task")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -870,6 +875,7 @@ class ValuelistExcelService:
                             return True
                 return False
             except Exception:
+                log.exception("excel_write_failed")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -891,6 +897,7 @@ class ValuelistExcelService:
                             return True
                 return False
             except Exception:
+                log.exception("excel_write_failed")
                 return False
 
         return await asyncio.to_thread(_write)
@@ -990,7 +997,7 @@ class ValuelistExcelService:
                 wb.save(self._excel_path)
                 return True
             except Exception as e:
-                print(f"Error updating bitacora: {e}")
+                log.exception("error_update_bitacora")
                 return False
 
         return await asyncio.to_thread(_write)
