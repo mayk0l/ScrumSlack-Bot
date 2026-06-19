@@ -533,7 +533,7 @@
 | H.2 | Eliminar `ExcelSyncService` huérfano; estilos a módulo compartido | P0 | ✅ Done |
 | H.3 | Limpieza de repo y docs engañosas | P1 | ✅ Done |
 | H.4 | Excel: columna Estado + esquema canónico + estilos centralizados | P0 | ✅ Done |
-| H.5 | Excel: validación de datos (dropdown) y formato condicional semáforo | P1 | 🔲 |
+| H.5 | Excel: validación de datos (dropdown) y formato condicional semáforo | P1 | ✅ Done |
 | H.6 | Excel: porcentaje consistente (0-1) y autoderivación de Estado | P1 | 🔲 |
 | H.7 | Excel: evidencia con hipervínculos + hoja Dashboard con KPIs | P1 | 🔲 |
 | H.8 | Fix `/progreso` (método inexistente) | P0 | 🔲 |

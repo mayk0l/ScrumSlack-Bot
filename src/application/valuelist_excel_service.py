@@ -157,7 +157,8 @@ class ValuelistExcelService:
         from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
         from openpyxl.utils import get_column_letter
         from openpyxl.worksheet.table import Table, TableStyleInfo
-        from openpyxl.formatting.rule import DataBarRule
+        from openpyxl.formatting.rule import DataBarRule, CellIsRule
+        from openpyxl.worksheet.datavalidation import DataValidation
         from datetime import datetime, timedelta
         from src.infrastructure import excel_styles as xls
 
@@ -241,10 +242,33 @@ class ValuelistExcelService:
                 tab.tableStyleInfo = style
                 ws.add_table(tab)
 
-            # DataBars conditional formatting for percentage
+            # Formato condicional: DataBar para el progreso y semáforo por Estado.
+            estado_col = get_column_letter(IDX_ESTADO + 1)   # "F"
+            prog_col = get_column_letter(IDX_PROGRESO + 1)    # "G"
             ws.conditional_formatting = type(ws.conditional_formatting)()
-            rule = DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color=xls.COLOR_DATABAR)
-            ws.conditional_formatting.add(f"G2:G{max_r}", rule)
+            ws.conditional_formatting.add(
+                f"{prog_col}2:{prog_col}{max_r}",
+                DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color=xls.COLOR_DATABAR),
+            )
+            for status, color in xls.STATUS_COLORS.items():
+                ws.conditional_formatting.add(
+                    f"{estado_col}2:{estado_col}{max_r}",
+                    CellIsRule(operator="equal", formula=[f'"{status}"'], fill=xls.solid_fill(color)),
+                )
+
+            # Validación de datos: dropdown de Estado (evita typos y normaliza el semáforo).
+            ws.data_validations.dataValidation.clear()
+            dv = DataValidation(
+                type="list",
+                formula1='"%s"' % ",".join(TASK_STATUSES),
+                allow_blank=True,
+            )
+            dv.errorTitle = "Estado inválido"
+            dv.error = "Selecciona un estado de la lista desplegable."
+            dv.promptTitle = "Estado"
+            dv.prompt = "Elige el estado de la tarea"
+            ws.add_data_validation(dv)
+            dv.add(f"{estado_col}2:{estado_col}{max_r}")
 
             # Cell formatting inside the table
             for row in ws.iter_rows(min_row=2, max_row=max_r, max_col=9):

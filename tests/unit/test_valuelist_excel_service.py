@@ -199,3 +199,15 @@ async def test_estado_header_is_canonical(service, excel_path):
     headers = [c.value for c in ws[1]]
     assert headers[5] == "Estado"
     assert headers[6] == "% de logro"
+
+
+@pytest.mark.asyncio
+async def test_estado_dropdown_and_conditional_formatting(service, excel_path):
+    await service.create_task("OE1", "Con estado", "Ana", "2026-06-10", "2026-06-12")
+    wb = openpyxl.load_workbook(excel_path)
+    ws = wb["Planificación"]
+    # Dropdown de Estado con los 4 valores válidos.
+    formulas = [dv.formula1 or "" for dv in ws.data_validations.dataValidation]
+    assert any("EN CURSO" in f and "BLOQUEADO" in f for f in formulas)
+    # Semáforo: hay reglas de formato condicional aplicadas.
+    assert len(list(ws.conditional_formatting)) >= 1
