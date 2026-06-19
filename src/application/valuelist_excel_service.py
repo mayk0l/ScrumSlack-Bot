@@ -97,15 +97,13 @@ class ValuelistExcelService:
         from openpyxl.worksheet.table import Table, TableStyleInfo
         from openpyxl.formatting.rule import DataBarRule
         from datetime import datetime, timedelta
+        from src.infrastructure import excel_styles as xls
 
-        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-        header_font = Font(color="FFFFFF", bold=True)
-        align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
-        thin_border = Border(
-            left=Side(style='thin'), right=Side(style='thin'),
-            top=Side(style='thin'), bottom=Side(style='thin')
-        )
+        header_fill = xls.header_fill()
+        header_font = xls.header_font()
+        align_center = xls.align_center()
+        align_left = xls.align_left()
+        thin_border = xls.thin_border()
 
         headers = ["Actividad", "Descripción (resumen)", "Responsable", "Comienzo", "Fin (Esperado/logrado)", "% logro esperado", "% de logro", "Entregable", "Comentarios"]
         
@@ -127,8 +125,8 @@ class ValuelistExcelService:
             ws_bit.column_dimensions['C'].width = 70
             
             # Style data cells with alternating colors
-            og_fill = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
-            oe_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+            og_fill = xls.solid_fill(xls.COLOR_OG)
+            oe_fill = xls.solid_fill(xls.COLOR_OE)
             
             for row in ws_bit.iter_rows(min_row=2):
                 field = str(row[1].value).strip().upper() if row[1].value else ""
@@ -183,7 +181,7 @@ class ValuelistExcelService:
 
             # DataBars conditional formatting for percentage
             ws.conditional_formatting = type(ws.conditional_formatting)()
-            rule = DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color="5A8AC6")
+            rule = DataBarRule(start_type="num", start_value=0, end_type="num", end_value=1, color=xls.COLOR_DATABAR)
             ws.conditional_formatting.add(f"G2:G{max_r}", rule)
 
             # Cell formatting inside the table
@@ -313,7 +311,7 @@ class ValuelistExcelService:
                 
             c2 = ws_gantt.cell(row=2, column=col_idx)
             c2.value = f"{w.day:02d}/{w.month:02d}"
-            c2.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+            c2.fill = xls.solid_fill(xls.COLOR_SUBHEADER)
             c2.font = Font(bold=True)
             c2.alignment = align_center
             c2.border = thin_border
@@ -332,7 +330,7 @@ class ValuelistExcelService:
             cell.border = thin_border
 
         # Draw tasks
-        gantt_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        gantt_fill = xls.solid_fill(xls.COLOR_GANTT_BAR)
         
         row_idx = 3
         for t in sorted(tasks, key=lambda x: x["start"]):
