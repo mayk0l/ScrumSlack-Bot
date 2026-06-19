@@ -5,6 +5,7 @@ Servicio de aplicación para generar resúmenes diarios.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from uuid import UUID
 
@@ -16,6 +17,23 @@ from src.infrastructure.ai_client import AIClient
 import structlog
 
 log = structlog.get_logger(__name__)
+
+
+def _to_slack_mrkdwn(text: str) -> str:
+    """Convierte Markdown (típico de la IA) a mrkdwn de Slack.
+
+    Slack no soporta encabezados `#` ni `**negrita**`: usa `*negrita*`.
+    """
+    if not text:
+        return text
+    # Encabezados Markdown -> negrita Slack.
+    text = re.sub(r"(?m)^\s{0,3}#{1,6}\s*(.+?)\s*$", r"*\1*", text)
+    # **negrita** / __negrita__ -> *negrita*.
+    text = re.sub(r"\*\*(.+?)\*\*", r"*\1*", text)
+    text = re.sub(r"__(.+?)__", r"*\1*", text)
+    # Viñetas "- " o "* " al inicio de línea -> "• ".
+    text = re.sub(r"(?m)^(\s*)[-*]\s+", r"\1• ", text)
+    return text
 
 # Severidad → etiqueta de Slack (emoji + español). Se mantiene local para no
 # acoplar la capa de aplicación con la de presentación de Slack.
@@ -150,10 +168,14 @@ class ReportService:
                 prompt=(
                     f"Eres un Scrum Master. {context_prompt}Genera un resumen ejecutivo "
                     "conciso en español del siguiente reporte diario. "
-                    "Enfócate en accionables y riesgos."
+                    "Enfócate en accionables y riesgos. "
+                    "Formatea para Slack: usa *negrita* con un solo asterisco, "
+                    "no uses encabezados Markdown (#) ni dobles asteriscos (**), "
+                    "y usa viñetas con •."
                 ),
                 context=summary,
             )
+            analysis = _to_slack_mrkdwn(analysis)
             return f"{summary}\n\n———\n*🤖 Análisis del Scrum Master (IA)*\n\n{analysis}"
         except Exception as e:
             log.warning("ai_summary_failed", error=str(e))

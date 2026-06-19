@@ -147,6 +147,39 @@ async def test_daily_summary_uses_slack_mentions_and_valid_mrkdwn():
     assert "##" not in summary
     assert "**" not in summary
 
+
+def test_to_slack_mrkdwn_converts_markdown():
+    from src.application.report_service import _to_slack_mrkdwn
+
+    out = _to_slack_mrkdwn("## Título\n**Negrita** normal\n- item\n* otro")
+    assert "##" not in out
+    assert "**" not in out
+    assert "*Título*" in out
+    assert "*Negrita*" in out
+    assert "• item" in out
+    assert "• otro" in out
+
+
+class FakeMarkdownAIClient:
+    async def generate_summary(self, prompt, context):
+        return "**Resumen**\n## Sección\n- punto importante"
+
+
+@pytest.mark.asyncio
+async def test_ai_summary_converts_markdown_to_slack():
+    service = ReportService(
+        standup_service=FakeStandupService(),
+        github_service=FakeGitHubService(),
+        risk_service=FakeRiskService(),
+        ai_client=FakeMarkdownAIClient(),
+    )
+    result = await service.generate_ai_summary(uuid4(), "C1")
+    ai_part = result.split("Análisis del Scrum Master")[-1]
+    assert "**" not in ai_part
+    assert "##" not in ai_part
+    assert "*Resumen*" in ai_part
+    assert "• punto importante" in ai_part
+
 @pytest.mark.asyncio
 async def test_generate_ai_summary_with_context():
     team_id = uuid4()

@@ -559,6 +559,10 @@ menciones reales y severidades unificadas, modales con hints, y jobs de GitHub/r
 programados con notificación proactiva. `ExcelSyncService` huérfano eliminado. Falta solo
 `git push` (lo realiza el dueño).
 
+**Hotfix H.12.1:** el texto del análisis IA llegaba en Markdown de GitHub
+(`**negrita**`, `##`) que Slack muestra literal. Se añadió `_to_slack_mrkdwn`
+(post-proceso) + instrucción en el prompt para convertirlo a mrkdwn de Slack.
+
 ### Fase E — Mejoras Premium y UX
 #### E.1 — Estética Premium del Excel (Tablas, DataBars, Freeze Panes)
 - **ID:** `E.1`
